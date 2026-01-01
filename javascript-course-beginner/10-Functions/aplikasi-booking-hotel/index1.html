@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Booking Hotel</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <style>
+      .booking-card {
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+      }
+      .booking-card:hover {
+        transform: translateY(-5px);
+      }
+      .status-confirmed {
+        border-left: 5px solid #28a745;
+      }
+      .status-cancelled {
+        border-left: 5px solid #dc3545;
+      }
+      .status-pending {
+        border-left: 5px solid #ffc107;
+      }
+      .hotel-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+      }
+      .price-tag {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+      }
+      .action-buttons {
+        margin-top: 10px;
+      }
+      .action-buttons button {
+        margin-right: 5px;
+        margin-bottom: 5px;
+      }
+      #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+      }
+      .toast {
+        min-width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="hotel-header">
+      <div class="container">
+        <h1><i class="bi bi-building"></i> Grand Hotel Booking System</h1>
+        <p class="lead">Booking kamar hotel dengan mudah dan cepat</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <!-- Sidebar: Form Booking -->
+        <div class="col-lg-4 col-md-5 mb-4">
+          <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+              <h4 class="mb-0">
+                <i class="bi bi-calendar-plus"></i> Buat Booking Baru
+              </h4>
+            </div>
+            <div class="card-body">
+              <form id="bookingForm">
+                <div class="mb-3">
+                  <label for="hotelName" class="form-label">Nama Hotel</label>
+                  <select class="form-select" id="hotelName" required>
+                    <option value="Grand Hotel">Grand Hotel</option>
+                    <option value="Plaza Hotel">Plaza Hotel</option>
+                    <option value="Beach Resort">Beach Resort</option>
+                    <option value="Mountain View">Mountain View</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="roomType" class="form-label">Tipe Kamar</label>
+                  <select class="form-select" id="roomType" required>
+                    <option value="standard">
+                      Standard - Rp 500.000/malam
+                    </option>
+                    <option value="deluxe">Deluxe - Rp 800.000/malam</option>
+                    <option value="suite">Suite - Rp 1.500.000/malam</option>
+                    <option value="premium">
+                      Premium - Rp 2.000.000/malam
+                    </option>
+                  </select>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="nights" class="form-label">Jumlah Malam</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="nights"
+                      min="1"
+                      max="30"
+                      value="1"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="guests" class="form-label">Jumlah Tamu</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="guests"
+                      min="1"
+                      max="4"
+                      value="1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="checkInDate" class="form-label"
+                    >Tanggal Check-in</label
+                  >
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="checkInDate"
+                    required
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Perkiraan Harga</label>
+                  <div class="alert alert-info" id="pricePreview">
+                    <strong>Rp 0</strong>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle"></i> Buat Booking
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    id="checkAvailabilityBtn"
+                  >
+                    <i class="bi bi-search"></i> Cek Ketersediaan
+                  </button>
+                </div>
+              </form>
+
+              <!-- Cek Ketersediaan Result -->
+              <div class="mt-3" id="availabilityResult" style="display: none">
+                <div class="alert" id="availabilityAlert">
+                  <!-- Result will be shown here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upgrade Booking Form -->
+          <div class="card shadow mt-4">
+            <div class="card-header bg-warning">
+              <h5 class="mb-0">
+                <i class="bi bi-arrow-up-circle"></i> Upgrade Booking
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="upgradeForm">
+                <div class="mb-3">
+                  <label for="upgradeBookingId" class="form-label"
+                    >ID Booking</label
+                  >
+                  <select class="form-select" id="upgradeBookingId">
+                    <option value="">Pilih Booking</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="newRoomType" class="form-label"
+                    >Upgrade ke Tipe Kamar</label
+                  >
+                  <select class="form-select" id="newRoomType">
+                    <option value="deluxe">Deluxe (+Rp 300.000/malam)</option>
+                    <option value="suite">Suite (+Rp 1.000.000/malam)</option>
+                    <option value="premium">
+                      Premium (+Rp 1.500.000/malam)
+                    </option>
+                  </select>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-arrow-up"></i> Upgrade Booking
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content: Daftar Booking -->
+        <div class="col-lg-8 col-md-7">
+          <div class="card shadow">
+            <div
+              class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+            >
+              <h4 class="mb-0"><i class="bi bi-list-ul"></i> Daftar Booking</h4>
+              <span class="badge bg-light text-dark" id="bookingCount"
+                >0 Bookings</span
+              >
+            </div>
+            <div class="card-body">
+              <!-- Filter Controls -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-search"></i
+                    ></span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="searchBooking"
+                      placeholder="Cari booking..."
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <select class="form-select" id="filterStatus">
+                    <option value="all">Semua Status</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Booking List -->
+              <div id="bookingList">
+                <div class="text-center py-5">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2">Memuat data booking...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Summary -->
+          <div class="row mt-4">
+            <div class="col-md-4">
+              <div class="card text-white bg-success">
+                <div class="card-body">
+                  <h5><i class="bi bi-check-circle"></i> Aktif</h5>
+                  <h2 id="activeBookings">0</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card text-white bg-danger">
+                <div class="card-body">
+                  <h5><i class="bi bi-x-circle"></i> Dibatalkan</h5>
+                  <h2 id="cancelledBookings">0</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card text-white bg-primary">
+                <div class="card-body">
+                  <h5><i class="bi bi-cash-coin"></i> Total Revenue</h5>
+                  <h2 id="totalRevenue">Rp 0</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Booking System JavaScript -->
+    <script>
+      // ==================== BACKEND SYSTEM (Sama dengan yang sebelumnya) ====================
+      const bookings = [];
+
+      // Function untuk format currency
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+          minimumFractionDigits: 0,
+        }).format(amount);
+      }
+
+      // Function untuk generate ID yang lebih reliable
+      function generateBookingId() {
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, '0');
+        return `BK${timestamp}${random}`;
+      }
+
+      // Create Booking Function
+      const createBooking = function (
+        hotelName,
+        {
+          roomType = 'standard',
+          nights = 1,
+          guests = 1,
+          checkInDate = new Date().toISOString().split('T')[0],
+        } = {}
+      ) {
+        // Validasi
+        if (!hotelName || typeof hotelName !== 'string') {
+          throw new Error('Nama hotel harus diisi dan berupa teks');
+        }
+
+        if (guests < 1 || guests > 4) {
+          throw new Error('Jumlah tamu harus antara 1 dan 4');
+        }
+
+        // Price calculation
+        const roomPrices = {
+          standard: 500000,
+          deluxe: 800000,
+          suite: 1500000,
+          premium: 2000000,
+        };
+
+        const basePrice = roomPrices[roomType] || roomPrices.standard;
+        const totalPrice = basePrice * nights * (guests > 2 ? 1.2 : 1);
+
+        const booking = {
+          bookingId: generateBookingId(),
+          hotelName,
+          roomType,
+          nights,
+          guests,
+          checkInDate,
+          totalPrice,
+          status: 'confirmed',
+          createdAt: new Date().toISOString(),
+        };
+
+        bookings.push(booking);
+        return booking;
+      };
+
+      // Check Availability
+      const checkAvailability = function (
+        hotelName,
+        checkInDate,
+        roomType = 'standard'
+      ) {
+        const conflictingBookings = bookings.filter(
+          booking =>
+            booking.hotelName === hotelName &&
+            booking.checkInDate === checkInDate &&
+            booking.roomType === roomType &&
+            booking.status !== 'cancelled'
+        );
+
+        const maxRooms = 10;
+        const availableRooms = maxRooms - conflictingBookings.length;
+
+        return {
+          available: availableRooms > 0,
+          availableRooms,
+          conflictingBookings: conflictingBookings.length,
+        };
+      };
+
+      // Cancel Booking
+      const cancelBooking = function (bookingId) {
+        const index = bookings.findIndex(b => b.bookingId === bookingId);
+
+        if (index === -1) {
+          throw new Error(`Booking ${bookingId} tidak ditemukan`);
+        }
+
+        if (bookings[index].status === 'cancelled') {
+          throw new Error('Booking sudah dibatalkan sebelumnya');
+        }
+
+        const updatedBooking = {
+          ...bookings[index],
+          status: 'cancelled',
+          cancelledAt: new Date().toISOString(),
+          refundAmount: bookings[index].totalPrice * 0.8,
+        };
+
+        bookings[index] = updatedBooking;
+        return updatedBooking;
+      };
+
+      // Calculate Upgrade Price
+      const calculateUpgradePrice = function (
+        currentRoomType,
+        newRoomType,
+        nights
+      ) {
+        const priceDifference = {
+          standard: { deluxe: 300000, suite: 1000000, premium: 1500000 },
+          deluxe: { suite: 700000, premium: 1200000 },
+          suite: { premium: 500000 },
+        };
+
+        const difference = priceDifference[currentRoomType]?.[newRoomType] || 0;
+        return difference * nights;
+      };
+
+      // Upgrade Booking
+      const upgradeBooking = function (bookingId, newRoomType) {
+        const booking = bookings.find(b => b.bookingId === bookingId);
+
+        if (!booking) {
+          throw new Error('Booking tidak ditemukan');
+        }
+
+        if (booking.status !== 'confirmed') {
+          throw new Error('Hanya booking yang aktif bisa di-upgrade');
+        }
+
+        const upgradeCost = calculateUpgradePrice(
+          booking.roomType,
+          newRoomType,
+          booking.nights
+        );
+        const newTotal = booking.totalPrice + upgradeCost;
+
+        const updatedBooking = {
+          ...booking,
+          roomType: newRoomType,
+          totalPrice: newTotal,
+          upgradeCost,
+          upgradedAt: new Date().toISOString(),
+        };
+
+        const index = bookings.findIndex(b => b.bookingId === bookingId);
+        bookings[index] = updatedBooking;
+
+        return updatedBooking;
+      };
+
+      // ==================== FRONTEND LOGIC ====================
+
+      // Toast Notification System
+      function showToast(message, type = 'success') {
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+              <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                  <div class="d-flex">
+                      <div class="toast-body">
+                          ${message}
+                      </div>
+                      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                  </div>
+              </div>
+          `;
+
+        document
+          .getElementById('toast-container')
+          .insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
+
+        // Remove after hide
+        toastElement.addEventListener('hidden.bs.toast', function () {
+          this.remove();
+        });
+      }
+
+      // Render Booking List
+      function renderBookingList(filter = 'all', search = '') {
+        const bookingList = document.getElementById('bookingList');
+        let filteredBookings = bookings;
+
+        // Apply status filter
+        if (filter !== 'all') {
+          filteredBookings = filteredBookings.filter(
+            booking => booking.status === filter
+          );
+        }
+
+        // Apply search filter
+        if (search) {
+          const searchLower = search.toLowerCase();
+          filteredBookings = filteredBookings.filter(
+            booking =>
+              booking.bookingId.toLowerCase().includes(searchLower) ||
+              booking.hotelName.toLowerCase().includes(searchLower) ||
+              booking.roomType.toLowerCase().includes(searchLower)
+          );
+        }
+
+        if (filteredBookings.length === 0) {
+          bookingList.innerHTML = `
+                  <div class="text-center py-5">
+                      <i class="bi bi-inbox fs-1 text-muted"></i>
+                      <p class="mt-2 text-muted">Tidak ada data booking</p>
+                  </div>
+              `;
+          return;
+        }
+
+        let html = '';
+        filteredBookings.forEach(booking => {
+          const statusClass =
+            booking.status === 'confirmed'
+              ? 'status-confirmed'
+              : 'status-cancelled';
+          const statusBadge =
+            booking.status === 'confirmed'
+              ? '<span class="badge bg-success">Aktif</span>'
+              : '<span class="badge bg-danger">Dibatalkan</span>';
+
+          const upgradeInfo = booking.upgradeCost
+            ? `<p class="card-text"><small class="text-warning"><i class="bi bi-arrow-up-circle"></i> Upgraded from ${
+                booking.previousRoomType || 'previous type'
+              }</small></p>`
+            : '';
+
+          html += `
+                  <div class="card booking-card ${statusClass}">
+                      <div class="card-body">
+                          <div class="d-flex justify-content-between align-items-start">
+                              <div>
+                                  <h5 class="card-title">${
+                                    booking.hotelName
+                                  }</h5>
+                                  <h6 class="card-subtitle mb-2 text-muted">
+                                      <i class="bi bi-key"></i> ${booking.roomType.toUpperCase()}
+                                  </h6>
+                                  ${statusBadge}
+                              </div>
+                              <div class="text-end">
+                                  <h5 class="price-tag">${formatCurrency(
+                                    booking.totalPrice
+                                  )}</h5>
+                                  <small class="text-muted">${
+                                    booking.nights
+                                  } malam × ${booking.guests} tamu</small>
+                              </div>
+                          </div>
+
+                          <div class="row mt-3">
+                              <div class="col-md-6">
+                                  <p class="card-text">
+                                      <i class="bi bi-calendar-check"></i> <strong>Check-in:</strong> ${
+                                        booking.checkInDate
+                                      }
+                                  </p>
+                                  <p class="card-text">
+                                      <i class="bi bi-person"></i> <strong>ID Booking:</strong> ${
+                                        booking.bookingId
+                                      }
+                                  </p>
+                              </div>
+                              <div class="col-md-6">
+                                  <p class="card-text">
+                                      <i class="bi bi-clock"></i> <strong>Dibuat:</strong> ${new Date(
+                                        booking.createdAt
+                                      ).toLocaleDateString('id-ID')}
+                                  </p>
+                                  ${upgradeInfo}
+                              </div>
+                          </div>
+
+                          <div class="action-buttons">
+                              ${
+                                booking.status === 'confirmed'
+                                  ? `
+                                  <button class="btn btn-sm btn-danger cancel-btn" data-id="${booking.bookingId}">
+                                      <i class="bi bi-x-circle"></i> Batalkan
+                                  </button>
+                                  <button class="btn btn-sm btn-outline-warning upgrade-btn" data-id="${booking.bookingId}">
+                                      <i class="bi bi-arrow-up-circle"></i> Upgrade
+                                  </button>
+                              `
+                                  : `
+                                  <button class="btn btn-sm btn-outline-secondary" disabled>
+                                      <i class="bi bi-ban"></i> Tidak Tersedia
+                                  </button>
+                              `
+                              }
+                          </div>
+                      </div>
+                  </div>
+              `;
+        });
+
+        bookingList.innerHTML = html;
+
+        // Update stats
+        updateStats();
+
+        // Update dropdown
+        updateUpgradeDropdown();
+      }
+
+      // Update Stats
+      function updateStats() {
+        const activeBookings = bookings.filter(
+          b => b.status === 'confirmed'
+        ).length;
+        const cancelledBookings = bookings.filter(
+          b => b.status === 'cancelled'
+        ).length;
+        const totalRevenue = bookings
+          .filter(b => b.status === 'confirmed')
+          .reduce((sum, b) => sum + b.totalPrice, 0);
+
+        document.getElementById('activeBookings').textContent = activeBookings;
+        document.getElementById('cancelledBookings').textContent =
+          cancelledBookings;
+        document.getElementById('totalRevenue').textContent =
+          formatCurrency(totalRevenue);
+        document.getElementById(
+          'bookingCount'
+        ).textContent = `${bookings.length} Bookings`;
+      }
+
+      // Update Upgrade Dropdown
+      function updateUpgradeDropdown() {
+        const dropdown = document.getElementById('upgradeBookingId');
+        dropdown.innerHTML = '<option value="">Pilih Booking</option>';
+
+        const activeBookings = bookings.filter(b => b.status === 'confirmed');
+        activeBookings.forEach(booking => {
+          const option = document.createElement('option');
+          option.value = booking.bookingId;
+          option.textContent = `${booking.bookingId} - ${booking.hotelName} (${booking.roomType})`;
+          dropdown.appendChild(option);
+        });
+      }
+
+      // Update Price Preview
+      function updatePricePreview() {
+        const roomPrices = {
+          standard: 500000,
+          deluxe: 800000,
+          suite: 1500000,
+          premium: 2000000,
+        };
+
+        const roomType = document.getElementById('roomType').value;
+        const nights = parseInt(document.getElementById('nights').value) || 1;
+        const guests = parseInt(document.getElementById('guests').value) || 1;
+
+        const basePrice = roomPrices[roomType] || roomPrices.standard;
+        const totalPrice = basePrice * nights * (guests > 2 ? 1.2 : 1);
+
+        document.getElementById('pricePreview').innerHTML = `
+              <strong>${formatCurrency(totalPrice)}</strong>
+              <small class="d-block text-muted">${nights} malam × ${guests} tamu</small>
+          `;
+      }
+
+      // Initialize Date Input
+      function initializeDate() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkInDate').min = today;
+        document.getElementById('checkInDate').value = today;
+      }
+
+      // Event Listeners
+      document.addEventListener('DOMContentLoaded', function () {
+        initializeDate();
+        updatePricePreview();
+        renderBookingList();
+
+        // Create Booking Form
+        document
+          .getElementById('bookingForm')
+          .addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            try {
+              const hotelName = document.getElementById('hotelName').value;
+              const roomType = document.getElementById('roomType').value;
+              const nights = parseInt(document.getElementById('nights').value);
+              const guests = parseInt(document.getElementById('guests').value);
+              const checkInDate = document.getElementById('checkInDate').value;
+
+              const booking = createBooking(hotelName, {
+                roomType,
+                nights,
+                guests,
+                checkInDate,
+              });
+
+              showToast(
+                `Booking berhasil dibuat! ID: ${booking.bookingId}`,
+                'success'
+              );
+              renderBookingList();
+
+              // Reset form
+              this.reset();
+              initializeDate();
+              updatePricePreview();
+            } catch (error) {
+              showToast(`Error: ${error.message}`, 'danger');
+            }
+          });
+
+        // Check Availability Button
+        document
+          .getElementById('checkAvailabilityBtn')
+          .addEventListener('click', function () {
+            const hotelName = document.getElementById('hotelName').value;
+            const checkInDate = document.getElementById('checkInDate').value;
+            const roomType = document.getElementById('roomType').value;
+
+            const availability = checkAvailability(
+              hotelName,
+              checkInDate,
+              roomType
+            );
+
+            const resultDiv = document.getElementById('availabilityResult');
+            const alertDiv = document.getElementById('availabilityAlert');
+
+            if (availability.available) {
+              alertDiv.className = 'alert alert-success';
+              alertDiv.innerHTML = `
+                      <i class="bi bi-check-circle"></i> <strong>Tersedia!</strong><br>
+                      Kamar ${roomType} tersedia pada ${checkInDate}.<br>
+                      <small>Sisa kamar: ${availability.availableRooms} dari 10</small>
+                  `;
+            } else {
+              alertDiv.className = 'alert alert-danger';
+              alertDiv.innerHTML = `
+                      <i class="bi bi-x-circle"></i> <strong>Penuh!</strong><br>
+                      Kamar ${roomType} penuh pada ${checkInDate}.<br>
+                      <small>Sudah terbooking: ${availability.conflictingBookings} kamar</small>
+                  `;
+            }
+
+            resultDiv.style.display = 'block';
+          });
+
+        // Upgrade Form
+        document
+          .getElementById('upgradeForm')
+          .addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const bookingId = document.getElementById('upgradeBookingId').value;
+            const newRoomType = document.getElementById('newRoomType').value;
+
+            if (!bookingId) {
+              showToast('Pilih booking terlebih dahulu!', 'warning');
+              return;
+            }
+
+            try {
+              const upgraded = upgradeBooking(bookingId, newRoomType);
+              showToast(
+                `Booking berhasil di-upgrade ke ${newRoomType}! Biaya tambahan: ${formatCurrency(
+                  upgraded.upgradeCost
+                )}`,
+                'success'
+              );
+              renderBookingList();
+              updateUpgradeDropdown();
+
+              // Reset form
+              this.reset();
+            } catch (error) {
+              showToast(`Error: ${error.message}`, 'danger');
+            }
+          });
+
+        // Price Preview Update
+        ['roomType', 'nights', 'guests'].forEach(id => {
+          document
+            .getElementById(id)
+            .addEventListener('change', updatePricePreview);
+          document
+            .getElementById(id)
+            .addEventListener('input', updatePricePreview);
+        });
+
+        // Search and Filter
+        document
+          .getElementById('searchBooking')
+          .addEventListener('input', function () {
+            const filter = document.getElementById('filterStatus').value;
+            renderBookingList(filter, this.value);
+          });
+
+        document
+          .getElementById('filterStatus')
+          .addEventListener('change', function () {
+            const search = document.getElementById('searchBooking').value;
+            renderBookingList(this.value, search);
+          });
+
+        // Event Delegation for Cancel and Upgrade buttons
+        document
+          .getElementById('bookingList')
+          .addEventListener('click', function (e) {
+            // Cancel Button
+            if (e.target.closest('.cancel-btn')) {
+              const bookingId = e.target.closest('.cancel-btn').dataset.id;
+
+              if (confirm('Apakah Anda yakin ingin membatalkan booking ini?')) {
+                try {
+                  const cancelled = cancelBooking(bookingId);
+                  showToast(
+                    `Booking berhasil dibatalkan! Refund: ${formatCurrency(
+                      cancelled.refundAmount
+                    )}`,
+                    'warning'
+                  );
+                  renderBookingList();
+                  updateUpgradeDropdown();
+                } catch (error) {
+                  showToast(`Error: ${error.message}`, 'danger');
+                }
+              }
+            }
+
+            // Upgrade Button
+            if (e.target.closest('.upgrade-btn')) {
+              const bookingId = e.target.closest('.upgrade-btn').dataset.id;
+              const booking = bookings.find(b => b.bookingId === bookingId);
+
+              if (booking) {
+                // Auto-fill upgrade form
+                document.getElementById('upgradeBookingId').value = bookingId;
+
+                // Show modal or scroll to form
+                document.getElementById('upgradeForm').scrollIntoView({
+                  behavior: 'smooth',
+                });
+
+                // Highlight the form
+                document
+                  .getElementById('upgradeForm')
+                  .parentElement.classList.add('bg-warning', 'bg-opacity-10');
+                setTimeout(() => {
+                  document
+                    .getElementById('upgradeForm')
+                    .parentElement.classList.remove(
+                      'bg-warning',
+                      'bg-opacity-10'
+                    );
+                }, 2000);
+              }
+            }
+          });
+
+        // Add some sample data for demo
+        setTimeout(() => {
+          // Add sample bookings for demo
+          if (bookings.length === 0) {
+            createBooking('Grand Hotel', {
+              roomType: 'standard',
+              nights: 2,
+              guests: 2,
+              checkInDate: '2024-01-20',
+            });
+
+            createBooking('Plaza Hotel', {
+              roomType: 'deluxe',
+              nights: 3,
+              guests: 3,
+              checkInDate: '2024-01-22',
+            });
+
+            showToast('Sample data telah dimuat!', 'info');
+            renderBookingList();
+          }
+        }, 1000);
+      });
+    </script>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
