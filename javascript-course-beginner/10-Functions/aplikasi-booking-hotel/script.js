@@ -1,6 +1,6 @@
 'use strict';
 
-const { isValidElement } = require('react');
+// const { isValidElement } = require('react');
 
 const bookings = [];
 
@@ -42,11 +42,6 @@ function generateBookingId() {
   return `HOTEL${timestamp}${randomId}`;
 }
 
-function getMaxRooms(hotelName, roomType) {
-  const normailizedHotel = hotelName.trim();
-  return HOTEL_CONFIG[normailizedHotel]?.[roomType] || 0;
-}
-
 const createBooking = function (hotelName, options = {}) {
   const {
     roomType = 'standard',
@@ -85,8 +80,8 @@ const createBooking = function (hotelName, options = {}) {
     throw new Error('Kamar premium minimal 2 malam');
   }
 
-  if (roomType === 'suite' && guests > 3) {
-    throw new Error('Kamar suite maksimal 3 tamu');
+  if (roomType === 'suite' && guests > 4) {
+    throw new Error('Kamar suite maksimal 4 tamu');
   }
 
   const roomPrices = {
@@ -114,25 +109,46 @@ const createBooking = function (hotelName, options = {}) {
   return booking;
 };
 
-const checkAvailability = function (hotelName, checkInDate, roomType) {
+function getMaxRooms(hotelName, roomType) {
+  const normalizedHotel = hotelName.trim();
+  return HOTEL_CONFIG[normalizedHotel]?.[roomType] || 0;
+}
+
+const checkAvailability = function (
+  hotelName,
+  checkInDate,
+  roomType = 'standard'
+) {
   const normalizedHotel = hotelName.trim();
   //! validasi hotel exist
   const hotelConfig = HOTEL_CONFIG[normalizedHotel];
+  // cek hotel ada di config atau tidak
   if (!hotelConfig) {
-    throw new Error(`hotel ${hotelName} tidak ditemukan`);
+    return {
+      available: false,
+      error: `Hotel ${hotelName} tidak ditemukan`,
+      availableRooms: 0,
+      maxRooms: 0,
+    };
   }
 
-  const maxRooms = hotelConfig.currentAllLocation[roomType] || 0;
-
-  const conflictingBookings = bookings.filter(
-    booking =>
-      booking.hotelName.toLowerCase() === hotelName &&
-      booking.checkInDate === checkInDate &&
-      booking.roomType.toLowerCase() === roomType &&
-      booking.status !== 'cancelled'
+  const maxRooms = getMaxRooms(normalizedHotel, roomType);
+  // hitung booking yang sudah ada
+  const activeBookings = bookings.filter(
+    b =>
+      b.hotelName === normalizedHotel &&
+      b.checkInDate === checkInDate &&
+      b.roomType === roomType &&
+      b.status === 'confirmed'
   );
-  const availableRooms = Math.max(0, maxRooms - conflictingBookings.length);
 
-  return { available: availableRooms > 0 };
+  const availableRooms = Math.max(0, maxRooms - activeBookings);
+
+  return {
+    available: availableRooms > 0,
+    availableRooms,
+    bookedRooms: activeBookings.length,
+    maxRooms,
+  };
 };
 // console.log(randomId);
