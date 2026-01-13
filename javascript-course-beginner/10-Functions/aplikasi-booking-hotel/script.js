@@ -2,7 +2,7 @@
 
 // const { isValidElement } = require('react');
 
-let bookings = [];
+const bookings = [];
 
 const HOTEL_CONFIG = {
   'Grand Hotel': {
