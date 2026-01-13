@@ -96,34 +96,60 @@ const createBooking = function (hotelName, options = {}) {
     checkInDate = new Date().toISOString().split('T')[0],
   } = options;
 
-  const normalizedHotel = hotelName.trim();
-  //* VALIDASI INPUT
+  // normalisasi
+  const normalizedHotel = hotelName?.trim() || '';
+
+  // validasi format dan tipe data
+  // hotel name
+  if (!normalizedHotel || typeof normalizedHotel !== 'string') {
+    throw new Error('nama hotel harus diisi dan berupa teks');
+  }
+
+  // roomtype
+  if (typeof roomType === 'string') {
+    throw new Error('Tipe kamar harus berupa teks');
+  }
+
+  //date harus string
+  if (typeof checkInDate !== 'string') {
+    throw new Error('Tanggal check-in harus berupa string');
+  }
+
+  // validasi business logic
+  // hotel exist
   if (!HOTEL_CONFIG[normalizedHotel]) {
     throw new Error(`Hotel ${hotelName} tidak ditemukan`);
   }
 
-  if (
-    !normalizedHotel ||
-    typeof normalizedHotel !== 'string' ||
-    normalizedHotel.trim() === ''
-  ) {
-    throw new Error('nama hotel harus diisi dan berupa teks');
-  }
-
+  // range tamu
   if (!Number.isInteger(guests) || guests < 1 || guests > 4) {
     throw new Error('Jumlah tamu harus antara 1 dan 4');
   }
 
+  // range malam
   if (!Number.isInteger(nights) || nights < 1 || nights > 30) {
     throw new Error('Jumlah malam harus 1-30');
   }
 
+  // check in date
   const today = new Date().toISOString().split('T')[0];
   if (!isValidDate(checkInDate)) {
     throw new Error('format tanggal tidak valid');
   }
   if (checkInDate < today) {
     throw new Error('Tanggal check-in tidak boleh masa lalu');
+  }
+
+  function isValidDate(dateString) {
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+
+    const date = new Date(dateString);
+    return (
+      date instanceof Date &&
+      !isNaN(date) &&
+      dateString === date.toISOString().split('T')[0]
+    );
   }
 
   const maxRooms = getMaxRooms(normalizedHotel, roomType);
@@ -192,7 +218,7 @@ const createBooking = function (hotelName, options = {}) {
     totalPrice,
     status: 'confirmed',
     createdAt: new Date().toISOString(),
-    roomNumber,
+    roomNumber: this.assignRoomNumber(normalizedHotel, roomType),
   };
   bookings.push(booking);
   return booking;
@@ -226,36 +252,31 @@ function assignRoomNumber(hotelName, roomType) {
   // cari kamar yang belum terisi
   const usedRoom = bookings
     .filter(b => b.hotelName === hotelName && b.roomType === roomType)
+    // const bookings = [
+    //   { hotelName: 'Grand Hotel', roomType: 'standard', roomNumber: 101 },
+    //   { hotelName: 'Grand Hotel', roomType: 'deluxe', roomNumber: 201 },
+    //   { hotelName: 'Plaza Hotel', roomType: 'standard', roomNumber: 101 }
+    // ];
+
+    // Filter untuk Grand Hotel, standard
+    // Hasil: [{ hotelName: 'Grand Hotel', roomType: 'standard', roomNumber: 101 }]
     .map(b => b.roomNumber)
+    // Input: [{..., roomNumber: 101}, {...}] object
+    // Output: [101] array roomNumber
     .filter(Boolean);
-  console.log(usedRoom);
+  // [101, undefined, 102, null].filter(Boolean)
+  // → [101, 102]
 
   for (let i = range.start; i <= range.end; i++) {
+    // range = { start: 101, end: 104 }
+    // usedRoom = [101, 102]
     if (!usedRoom.includes(i)) {
+      // Iterasi:
+      // i = 101 → usedRoom.includes(101) = true (skip)
+      // i = 102 → true (skip)
+      // i = 103 → false → return 103
       return i;
     }
   }
-  return null;
+  return null; // semua kamar terisi
 }
-
-// Contoh penggunaan manual (opsional)
-console.log('=== Contoh Penggunaan Manual ===');
-bookings = [
-  { hotelName: 'Grand Hotel', roomType: 'standard', roomNumber: 101 },
-  { hotelName: 'Grand Hotel', roomType: 'standard', roomNumber: 102 },
-  { hotelName: 'Grand Hotel', roomType: 'standard', roomNumber: 103 },
-  { hotelName: 'Beach Resort', roomType: 'suite', roomNumber: 301 },
-];
-
-console.log(
-  '1. Grand Hotel - standard:',
-  assignRoomNumber('Grand Hotel', 'standard')
-);
-// console.log(
-//   '2. Beach Resort - suite:',
-//   assignRoomNumber('Beach Resort', 'suite')
-// );
-// console.log(
-//   '3. Grand Hotel - deluxe:',
-//   assignRoomNumber('Grand Hotel', 'deluxe')
-// );
