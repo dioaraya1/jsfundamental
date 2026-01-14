@@ -1,6 +1,6 @@
 'use strict';
 
-// const { isValidElement } = require('react');
+const { isValidElement } = require('react');
 
 const bookings = [];
 
