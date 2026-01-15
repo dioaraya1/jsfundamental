@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Synchronized Lyrics Display</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        overflow: hidden;
+        font-family: "Inter", -apple-system, sans-serif;
+      }
+
+      .lyric-container {
+        perspective: 1000px;
+      }
+
+      .lyric {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) translateZ(-100px);
+        opacity: 0;
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: pre-wrap;
+        text-align: center;
+        max-width: 90vw;
+        filter: blur(8px);
+      }
+
+      .lyric.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateZ(0);
+        filter: blur(0);
+      }
+
+      .lyric.past {
+        opacity: 0.3;
+        transform: translate(-50%, -70%) translateZ(-50px) scale(0.9);
+        filter: blur(3px);
+      }
+
+      .lyric.upcoming {
+        opacity: 0.2;
+        transform: translate(-50%, -30%) translateZ(-80px) scale(0.95);
+      }
+
+      .beat-pulse {
+        animation: beatPulse 0.3s ease-out;
+      }
+
+      @keyframes beatPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1.08);
+        }
+      }
+
+      .glow-red {
+        color: #ff6b6b;
+        text-shadow: 0 0 20px rgba(255, 107, 107, 0.8),
+          0 0 40px rgba(255, 107, 107, 0.4);
+      }
+
+      .glow-cyan {
+        color: #4ecdc4;
+        text-shadow: 0 0 20px rgba(78, 205, 196, 0.8),
+          0 0 40px rgba(78, 205, 196, 0.4);
+      }
+
+      .glow-emerald {
+        color: #95e1d3;
+        text-shadow: 0 0 25px rgba(149, 225, 211, 0.9),
+          0 0 50px rgba(149, 225, 211, 0.5);
+      }
+
+      .glow-white {
+        color: #f8f9fa;
+        text-shadow: 0 0 15px rgba(248, 249, 250, 0.6);
+      }
+
+      .progress-container {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 600px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #4ecdc4, #95e1d3);
+        width: 0%;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 10px rgba(78, 205, 196, 0.6);
+      }
+
+      audio {
+        filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+      }
+
+      .particle {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0.3;
+        animation: float 8s infinite ease-in-out;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(20px, -20px);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col items-center justify-center">
+    <div id="particles"></div>
+
+    <div class="fixed top-8 z-20">
+      <audio
+        id="audio"
+        controls
+        class="rounded-lg"
+      >
+        <source
+          src="drag_path.mp3"
+          type="audio/mpeg"
+        />
+        Your browser doesn't support audio.
+      </audio>
+    </div>
+
+    <div class="progress-container z-10">
+      <div
+        class="progress-bar"
+        id="progressBar"
+      ></div>
+    </div>
+
+    <div
+      id="debug"
+      class="fixed top-4 right-4 bg-black/70 text-xs text-green-400 px-4 py-2 rounded-lg font-mono backdrop-blur-sm"
+    ></div>
+
+    <div
+      class="lyric-container relative w-full h-[70vh] flex items-center justify-center"
+    >
+      <div
+        class="relative w-full"
+        id="lyricsContainer"
+      >
+        <!-- LYRICS - Edit di sini -->
+        <div class="lyric text-4xl font-light glow-white">
+          When I see the devil's eyes
+        </div>
+        <div class="lyric text-3xl glow-white">
+          A current travels down my spine
+        </div>
+        <div class="lyric italic text-2xl glow-cyan">He found me</div>
+        <div class="lyric text-3xl glow-white">
+          Seems as though I've lost again
+        </div>
+        <div class="lyric text-3xl glow-white">A story told ad nauseam</div>
+        <div class="lyric italic text-2xl glow-cyan">He found me</div>
+        <div class="lyric text-3xl glow-white">
+          Maybe once or twice or three
+        </div>
+        <div class="lyric text-3xl glow-white">
+          He's tried his hand at drowning me
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">
+          But I'm still on fire
+        </div>
+        <div class="lyric text-2xl glow-white">At least I'm pretty sure</div>
+
+        <div class="lyric text-4xl glow-white">When I see the devil's eyes</div>
+        <div class="lyric text-3xl glow-white">
+          I'll look away and smile wide
+        </div>
+        <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+        <div class="lyric text-3xl glow-white">
+          'Cause then I'll know you're also there
+        </div>
+        <div class="lyric text-3xl glow-white">
+          'Cause proof is in the adversary
+        </div>
+        <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+
+        <div class="lyric text-4xl font-bold glow-cyan">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          I left there on purpose, a sad sack
+        </div>
+        <div class="lyric italic text-2xl glow-white">
+          (Laying on the surface)
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-white">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          For you to unravel a drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+
+        <div class="lyric italic text-2xl glow-white">Would you—</div>
+        <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+        <div class="lyric italic text-2xl glow-white">Would you—</div>
+        <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+
+        <div class="lyric text-4xl font-bold glow-red">
+          Can you, can you,<br />can you, can you?
+        </div>
+        <div class="lyric text-3xl glow-white">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          I left there on purpose, a sad sack
+        </div>
+        <div class="lyric italic text-2xl glow-white">
+          Laying on the surface
+        </div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-white">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          For you to unravel the drag path<br />etched in the surface
+        </div>
+
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-red">Can you find me?</div>
+
+        <div class="lyric text-5xl font-bold glow-emerald">
+          Then the sun begins to rise
+        </div>
+        <div class="lyric text-4xl glow-emerald">
+          We made it through the darkest night
+        </div>
+        <div class="lyric text-5xl font-bold glow-emerald">You found me</div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================
+      // ARRAY TIMING - EDIT DI SINI (dalam detik)
+      // ============================================
+      const TIMINGS = [
+        13, 17, 22.5, 26, 31, 36.5, 40, 45, 50, 55, 70.5, 75, 80, 84, 89, 94,
+        101.5, 108, 113, 118, 120.3, 128.5, 131, 133, 138, 152.3, 157.8, 164.0,
+        168.0, 171.5, 176.0, 178.2, 180.5, 182.8, 188.5, 194.5, 200.0, 200, 200,
+        200, 200,
+      ];
+
+      // ============================================
+      // SYSTEM CODE - JANGAN EDIT
+      // ============================================
+      const audio = document.getElementById("audio");
+      const debug = document.getElementById("debug");
+      const progressBar = document.getElementById("progressBar");
+      const lyrics = document.querySelectorAll(".lyric");
+
+      // Validasi jumlah timing dengan jumlah lirik
+      if (TIMINGS.length !== lyrics.length) {
+        console.error(
+          `⚠️ MISMATCH! Timings: ${TIMINGS.length}, Lyrics: ${lyrics.length}`
+        );
+        alert(
+          `Error: Jumlah timing (${TIMINGS.length}) tidak sama dengan jumlah lirik (${lyrics.length})`
+        );
+      }
+
+      // Assign timing ke setiap lirik
+      lyrics.forEach((lyric, index) => {
+        lyric.dataset.time = TIMINGS[index];
+        lyric.dataset.index = index;
+      });
+
+      let currentIndex = -1;
+
+      // Audio analyzer
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      const source = ctx.createMediaElementSource(audio);
+
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const freqData = new Uint8Array(analyser.frequencyBinCount);
+      let lastBeat = 0;
+
+      function detectBeat() {
+        analyser.getByteFrequencyData(freqData);
+        let bass = 0;
+        for (let i = 2; i < 20; i++) bass += freqData[i];
+        bass /= 18;
+
+        const now = performance.now();
+        if (bass > 140 && now - lastBeat > 250) {
+          lastBeat = now;
+          const active = document.querySelector(".lyric.active");
+          if (active) {
+            active.classList.add("beat-pulse");
+            setTimeout(() => active.classList.remove("beat-pulse"), 300);
+          }
+        }
+        requestAnimationFrame(detectBeat);
+      }
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+
+        progressBar.style.width = (t / audio.duration) * 100 + "%";
+
+        let newIndex = -1;
+        for (let i = TIMINGS.length - 1; i >= 0; i--) {
+          if (t >= TIMINGS[i]) {
+            newIndex = i;
+            break;
+          }
+        }
+
+        if (newIndex !== currentIndex) {
+          lyrics.forEach((l) =>
+            l.classList.remove("active", "past", "upcoming")
+          );
+
+          if (newIndex >= 0) {
+            lyrics[newIndex].classList.add("active");
+
+            for (let i = 0; i < newIndex; i++) {
+              if (i >= newIndex - 2) lyrics[i].classList.add("past");
+            }
+
+            if (newIndex + 1 < lyrics.length) {
+              lyrics[newIndex + 1].classList.add("upcoming");
+            }
+          }
+
+          currentIndex = newIndex;
+        }
+
+        debug.textContent = `⏱ ${t.toFixed(2)}s | 🎤 ${currentIndex + 1}/${
+          lyrics.length
+        } | Next: ${TIMINGS[currentIndex + 1] || "END"}s`;
+      });
+
+      audio.addEventListener("play", () => {
+        ctx.resume();
+        detectBeat();
+      });
+
+      // Create particles
+      const particlesDiv = document.getElementById("particles");
+      for (let i = 0; i < 15; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.width = Math.random() * 4 + 2 + "px";
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.top = Math.random() * 100 + "%";
+        particle.style.background = `rgba(${Math.random() * 100 + 155}, ${
+          Math.random() * 100 + 155
+        }, 255, 0.4)`;
+        particle.style.animationDelay = Math.random() * 8 + "s";
+        particle.style.animationDuration = Math.random() * 4 + 6 + "s";
+        particlesDiv.appendChild(particle);
+      }
+
+      // Log info
+      console.log("📊 Total Lyrics:", lyrics.length);
+      console.log("⏱️ Total Timings:", TIMINGS.length);
+      console.log(
+        "✅ Status:",
+        TIMINGS.length === lyrics.length ? "OK" : "ERROR - Jumlah tidak sama!"
+      );
+    </script>
+  </body>
+</html>

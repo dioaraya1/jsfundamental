@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Drag Path – Twenty One Pilots</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      body {
+        background: radial-gradient(circle at center, #0a0a0a, #000);
+        overflow: hidden;
+      }
+
+      /* === LYRIC BASE === */
+      .lyric {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 0;
+        transition: all 0.6s ease;
+        white-space: nowrap;
+        letter-spacing: 0.12em;
+      }
+
+      .lyric.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+
+      /* === MODES === */
+      .panic {
+        color: #f87171;
+        text-shadow: 0 0 12px rgba(248, 113, 113, 0.6);
+      }
+
+      .calm {
+        color: #c7d2fe;
+        text-shadow: 0 0 18px rgba(99, 102, 241, 0.5);
+      }
+
+      .release {
+        color: #d1fae5;
+        letter-spacing: 0.25em;
+        text-shadow: 0 0 26px rgba(52, 211, 153, 0.6);
+      }
+
+      /* === BEAT MICRO INTERACTION === */
+      .pulse {
+        animation: pulse 0.25s ease;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.18);
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen flex flex-col items-center justify-center text-slate-100 overflow-hidden"
+  >
+    <!-- AUDIO -->
+    <audio
+      id="audio"
+      controls
+      class="z-20 mb-6"
+    >
+      <source
+        src="drag_path.mp3"
+        type="audio/mpeg"
+      />
+    </audio>
+
+    <div
+      id="debug"
+      class="fixed top-4 left-4 bg-black/60 text-xs text-green-300 px-3 py-2 rounded z-50 font-mono"
+    ></div>
+
+    <!-- LYRICS -->
+    <div
+      class="relative w-full h-[65vh] overflow-hidden flex items-center justify-center"
+    >
+      <div class="relative w-full text-center">
+        <!-- INTRO -->
+        <div class="lyric text-4xl font-light">When I see the devil's eyes</div>
+        <div class="lyric text-3xl">A current travels down my spine</div>
+        <div class="lyric italic">He found me</div>
+
+        <div class="lyric">Seems as though I've lost again</div>
+        <div class="lyric">A story told ad nauseam</div>
+        <div class="lyric italic">He found me</div>
+
+        <div class="lyric">Maybe once or twice or three</div>
+        <div class="lyric">He's tried his hand at drowning me</div>
+        <div class="lyric pulse text-orange-300 text-4xl">
+          But I'm still on fire
+        </div>
+        <div class="lyric">At least I'm pretty sure</div>
+
+        <!-- VERSE 2 -->
+        <div class="lyric">When I see the devil's eyes</div>
+        <div class="lyric">I'll look away and smile wide</div>
+        <div class="lyric font-semibold">You found me</div>
+
+        <div class="lyric">'Cause then I'll know you're also there</div>
+        <div class="lyric">'Cause proof is in the adversere</div>
+        <div class="lyric font-semibold">You found me</div>
+
+        <!-- CHORUS -->
+        <div class="lyric text-cyan-300 text-3xl">
+          A drag path etched in the surface as evidence
+        </div>
+        <div class="lyric">I left there on purpose, a sad sack</div>
+        <div class="lyric italic">(Laying on the surface)</div>
+
+        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
+
+        <div class="lyric">I dug my heels into the gravel as evidence</div>
+        <div class="lyric">
+          For you to unravel a drag path etched in the surface
+        </div>
+
+        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
+
+        <!-- BREAK -->
+        <div class="lyric italic">Would you—</div>
+        <div class="lyric italic">Please, please hurry</div>
+        <div class="lyric italic">Would you—</div>
+        <div class="lyric italic">Please, please hurry</div>
+
+        <!-- BUILD -->
+        <div class="lyric shake text-red-300 text-3xl">
+          Can you, can you, can you, can you?
+        </div>
+
+        <div class="lyric">A drag path etched in the surface as evidence</div>
+        <div class="lyric">I left there on purpose, a sad sack</div>
+        <div class="lyric italic">Laying on the surface</div>
+
+        <div class="lyric shake text-red-300">Can you find me?</div>
+
+        <div class="lyric">I dug my heels into the gravel as evidence</div>
+        <div class="lyric">
+          For you to unravel the drag path etched in the surface
+        </div>
+
+        <!-- REPEAT -->
+        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
+        <div class="lyric shake text-red-300">Can you find me?</div>
+        <div class="lyric shake text-red-300">Can you find me?</div>
+        <div class="lyric shake text-red-300">Can you find me?</div>
+
+        <!-- OUTRO -->
+        <div class="lyric pulse text-emerald-300 text-4xl">
+          Then the sun begins to rise
+        </div>
+        <div class="lyric text-emerald-400">
+          We made it through the darkest night
+        </div>
+        <div class="lyric font-semibold text-3xl">You found me</div>
+      </div>
+    </div>
+
+    <script>
+      /* ======================
+        SETUP
+      ====================== */
+      const audio = document.getElementById("audio");
+      const lyrics = document.querySelectorAll(".lyric");
+      const debug = document.getElementById("debug");
+
+      let current = -1;
+
+      /* ======================
+        BASE TIMINGS (SECONDS)
+      ====================== */
+      const timings = [
+        12.8, 16.6, 20.2, 24.5, 28.3, 32.0, 36.1, 40.0, 44.2, 48.5,
+
+        55.0, 58.8, 62.5, 66.6, 71.0, 75.2,
+
+        82.0, 88.2, 93.0, 97.2, 101.8, 108.0, 114.5,
+
+        120.5, 122.8, 126.0, 128.2,
+
+        133.5, 138.8, 145.0, 149.0, 153.5, 157.8, 164.0, 168.0, 171.5,
+
+        176.0, 178.2, 180.5, 182.8,
+
+        188.5, 194.5, 200.0,
+      ];
+
+      /* === AUDIO ANALYSER === */
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      const source = ctx.createMediaElementSource(audio);
+
+      analyser.fftSize = 1024;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      let lastBeat = 0;
+
+      function detectBeat() {
+        analyser.getByteFrequencyData(data);
+        let bass = 0;
+        for (let i = 5; i < 40; i++) bass += data[i];
+        bass /= 35;
+
+        const now = performance.now();
+        if (bass > 155 && now - lastBeat > 300) {
+          lastBeat = now;
+          const active = document.querySelector(".lyric.active");
+          if (active) {
+            active.classList.add("pulse");
+            setTimeout(() => active.classList.remove("pulse"), 200);
+          }
+        }
+        requestAnimationFrame(detectBeat);
+      }
+
+      audio.addEventListener("play", () => {
+        ctx.resume();
+        detectBeat();
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+
+        lyrics.forEach((line, i) => {
+          if (
+            t >= timings[i] &&
+            t < (timings[i + 1] || Infinity) &&
+            current !== i
+          ) {
+            if (current >= 0)
+              lyrics[current].classList.remove(
+                "active",
+                "panic",
+                "calm",
+                "release"
+              );
+
+            line.classList.add("active");
+            current = i;
+
+            if (t < 80) line.classList.add("panic");
+            else if (t < 150) line.classList.add("calm");
+            else line.classList.add("release");
+          }
+        });
+
+        debug.innerHTML = `⏱ ${t.toFixed(2)}s | 🎤 ${current}`;
+      });
+    </script>
+  </body>
+</html>
