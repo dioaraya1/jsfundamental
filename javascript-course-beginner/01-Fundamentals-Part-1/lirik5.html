@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Drag Path - Twenty One Pilots</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        overflow: hidden;
+        font-family: "VT323", monospace;
+        background: #0a0a0f;
+        color: #e0e0e8;
+      }
+
+      /* Retro CRT Background with animation */
+      .retro-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at 30% 40%,
+          #1a1a3e 0%,
+          #0f0f1a 50%,
+          #050508 100%
+        );
+        animation: bgShift 20s ease-in-out infinite;
+        z-index: 0;
+      }
+
+      @keyframes bgShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          background-position: 100% 50%;
+          filter: hue-rotate(5deg);
+        }
+      }
+
+      /* Animated grid - retro computer style */
+      .retro-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(
+            rgba(100, 100, 180, 0.03) 2px,
+            transparent 2px
+          ),
+          linear-gradient(90deg, rgba(100, 100, 180, 0.03) 2px, transparent 2px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 2;
+        animation: gridScroll 30s linear infinite;
+      }
+
+      @keyframes gridScroll {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(40px, 40px);
+        }
+      }
+
+      /* Horizon line - retro vaporwave style */
+      .horizon {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(80, 80, 140, 0.05) 30%,
+          rgba(100, 100, 160, 0.1) 100%
+        );
+        transform-origin: bottom;
+        transform: perspective(400px) rotateX(60deg);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Glowing horizon lines */
+      .horizon-lines {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 300px;
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0.2;
+      }
+
+      .h-line {
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(120, 120, 180, 0.8) 50%,
+          transparent
+        );
+        box-shadow: 0 0 10px rgba(120, 120, 180, 0.5);
+        animation: lineGlow 3s ease-in-out infinite;
+      }
+
+      @keyframes lineGlow {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      /* Beat-reactive background pulse */
+      .bg-pulse {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          rgba(100, 100, 180, 0.08),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.12s ease-out;
+        z-index: 1;
+      }
+
+      .bg-pulse.beat {
+        opacity: 1;
+      }
+
+      /* CRT scanlines with flicker */
+      .scanlines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.12),
+          rgba(0, 0, 0, 0.12) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+        pointer-events: none;
+        z-index: 100;
+        animation: scanlineMove 12s linear infinite,
+          scanlineFlicker 0.15s infinite;
+      }
+
+      @keyframes scanlineMove {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(12px);
+        }
+      }
+
+      @keyframes scanlineFlicker {
+        0% {
+          opacity: 0.05;
+        }
+        50% {
+          opacity: 0.08;
+        }
+        100% {
+          opacity: 0.05;
+        }
+      }
+
+      /* CRT curve effect */
+      .crt-curve {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 60%,
+          rgba(0, 0, 0, 0.3) 100%
+        );
+        pointer-events: none;
+        z-index: 98;
+      }
+
+      /* Glitch effect */
+      .glitch-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 99;
+        mix-blend-mode: screen;
+      }
+
+      .glitch-layer.active {
+        animation: glitchFlash 0.2s steps(3, end);
+      }
+
+      @keyframes glitchFlash {
+        0% {
+          opacity: 0;
+          transform: translate(0, 0);
+        }
+        33% {
+          opacity: 0.7;
+          transform: translate(-4px, 2px);
+          background: linear-gradient(
+            90deg,
+            rgba(150, 150, 200, 0.15) 0%,
+            transparent 10%,
+            rgba(120, 120, 180, 0.15) 100%
+          );
+        }
+        66% {
+          opacity: 0.5;
+          transform: translate(3px, -2px);
+          background: linear-gradient(
+            -90deg,
+            rgba(130, 130, 190, 0.12) 0%,
+            transparent 10%,
+            rgba(140, 140, 200, 0.12) 100%
+          );
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Starfield particles */
+      .star {
+        position: fixed;
+        background: rgba(180, 180, 220, 0.8);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: starTwinkle 3s ease-in-out infinite;
+      }
+
+      @keyframes starTwinkle {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.5);
+        }
+      }
+
+      /* Floating geometric shapes - retro style */
+      .geo-shape {
+        position: fixed;
+        border: 1px solid rgba(120, 120, 180, 0.3);
+        pointer-events: none;
+        animation: shapeFloat 25s linear infinite;
+      }
+
+      @keyframes shapeFloat {
+        0% {
+          transform: translateY(100vh) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.5;
+        }
+        90% {
+          opacity: 0.5;
+        }
+        100% {
+          transform: translateY(-100px) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      /* Lyric stage */
+      .lyric-stage {
+        position: relative;
+        perspective: 800px;
+        z-index: 10;
+      }
+
+      /* RETRO TYPING ANIMATION for lyrics */
+      .lyric {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) translateZ(-100px) scaleY(1.5);
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        white-space: pre-wrap;
+        text-align: center;
+        max-width: 85vw;
+        filter: blur(8px);
+        font-weight: 400;
+        letter-spacing: 0.15em;
+        line-height: 1.6;
+        color: #888899;
+        text-shadow: 0 0 10px rgba(136, 136, 153, 0.5),
+          0 0 20px rgba(136, 136, 153, 0.2);
+        font-size: 1.2em;
+      }
+
+      /* Active lyric - typewriter effect */
+      .lyric.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateZ(0) scaleY(1);
+        filter: blur(0);
+        color: #d8d8e8;
+        text-shadow: 0 0 20px rgba(216, 216, 232, 0.6),
+          0 0 40px rgba(180, 180, 220, 0.3), 2px 2px 0 rgba(100, 100, 180, 0.4),
+          0 4px 8px rgba(0, 0, 0, 0.5);
+        animation: typewriterGlow 0.1s steps(1) 10, pixelShake 0.08s;
+      }
+
+      @keyframes typewriterGlow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px rgba(216, 216, 232, 0.6),
+            0 0 40px rgba(180, 180, 220, 0.3),
+            2px 2px 0 rgba(100, 100, 180, 0.4);
+        }
+        50% {
+          text-shadow: 0 0 30px rgba(216, 216, 232, 0.8),
+            0 0 60px rgba(180, 180, 220, 0.5),
+            2px 2px 0 rgba(100, 100, 180, 0.6);
+        }
+      }
+
+      @keyframes pixelShake {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0);
+        }
+        25% {
+          transform: translate(calc(-50% - 1px), -50%) translateZ(0);
+        }
+        75% {
+          transform: translate(calc(-50% + 1px), -50%) translateZ(0);
+        }
+      }
+
+      /* Beat variations - retro style */
+      .lyric.active.beat-1 {
+        animation: retroBounce 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .lyric.active.beat-2 {
+        animation: pixelPulse 0.25s steps(4);
+      }
+
+      .lyric.active.beat-3 {
+        animation: retroZoom 0.35s ease-out;
+      }
+
+      @keyframes retroBounce {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0) scaleY(1);
+        }
+        50% {
+          transform: translate(-50%, -52%) translateZ(10px) scaleY(0.95);
+        }
+      }
+
+      @keyframes pixelPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+          filter: blur(0);
+        }
+        50% {
+          transform: translate(-50%, -50%) translateZ(5px) scale(1.05);
+          filter: blur(0) brightness(1.3);
+        }
+      }
+
+      @keyframes retroZoom {
+        0% {
+          transform: translate(-50%, -50%) translateZ(-30px) scale(0.9);
+          letter-spacing: 0.3em;
+        }
+        100% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+          letter-spacing: 0.15em;
+        }
+      }
+
+      /* Glitch text */
+      .lyric.active.glitch {
+        animation: textGlitchRetro 0.3s steps(2);
+      }
+
+      @keyframes textGlitchRetro {
+        0% {
+          transform: translate(-50%, -50%);
+          text-shadow: -3px 0 rgba(150, 150, 200, 0.7),
+            3px 0 rgba(100, 100, 160, 0.7);
+        }
+        25% {
+          transform: translate(calc(-50% - 3px), -50%);
+          text-shadow: 3px 0 rgba(150, 150, 200, 0.7),
+            -3px 0 rgba(100, 100, 160, 0.7);
+        }
+        50% {
+          transform: translate(calc(-50% + 2px), calc(-50% - 2px));
+          text-shadow: -2px 2px rgba(150, 150, 200, 0.7),
+            2px -2px rgba(100, 100, 160, 0.7);
+        }
+        75% {
+          transform: translate(calc(-50% + 3px), -50%);
+        }
+        100% {
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      .lyric.past {
+        opacity: 0.05;
+        transform: translate(-50%, -65%) translateZ(-80px) scaleY(2) scale(0.7);
+        filter: blur(5px);
+      }
+
+      .lyric.upcoming {
+        opacity: 0.15;
+        transform: translate(-50%, -35%) translateZ(-50px) scaleY(1.3)
+          scale(0.9);
+        filter: blur(4px);
+      }
+
+      /* Retro visualizer - 8-bit style */
+      .visualizer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 4px;
+        padding: 0 80px;
+        z-index: 5;
+        opacity: 0.2;
+      }
+
+      .vis-bar {
+        flex: 1;
+        max-width: 8px;
+        background: linear-gradient(
+          to top,
+          rgba(140, 140, 200, 0.8) 0%,
+          rgba(120, 120, 180, 0.4) 100%
+        );
+        border-radius: 0;
+        box-shadow: 0 0 5px rgba(140, 140, 200, 0.5),
+          inset 0 -2px 0 rgba(180, 180, 220, 0.3);
+        transition: height 0.08s steps(3);
+      }
+
+      /* Retro progress bar */
+      .progress-wrapper {
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 65%;
+        max-width: 650px;
+        z-index: 20;
+      }
+
+      .progress-track {
+        height: 4px;
+        background: rgba(100, 100, 140, 0.2);
+        border-radius: 0;
+        overflow: visible;
+        position: relative;
+        border: 1px solid rgba(140, 140, 180, 0.3);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          rgba(140, 140, 200, 0.9) 0%,
+          rgba(160, 160, 220, 0.7) 100%
+        );
+        width: 0%;
+        transition: width 0.1s steps(10);
+        box-shadow: 0 0 15px rgba(160, 160, 220, 0.5),
+          inset 0 1px 0 rgba(200, 200, 240, 0.5);
+        position: relative;
+      }
+
+      .progress-fill::after {
+        content: "";
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        background: rgba(220, 220, 240, 0.95);
+        border-radius: 0;
+        box-shadow: 0 0 10px rgba(220, 220, 240, 0.8),
+          inset 1px 1px 0 rgba(255, 255, 255, 0.5);
+      }
+
+      .time-display {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 11px;
+        color: rgba(180, 180, 210, 0.5);
+        font-weight: 400;
+        letter-spacing: 0.15em;
+        font-family: "Press Start 2P", cursive;
+      }
+
+      /* Audio player */
+      audio {
+        border-radius: 4px;
+        background: rgba(20, 20, 35, 0.8);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(120, 120, 180, 0.3);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(150, 150, 200, 0.2);
+      }
+
+      #debug {
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(140, 140, 180, 0.3);
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        color: rgba(180, 180, 210, 0.7);
+        font-family: "Press Start 2P", cursive;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      }
+
+      .vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 50%,
+          rgba(0, 0, 0, 0.6) 100%
+        );
+        pointer-events: none;
+        z-index: 97;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="retro-bg"></div>
+    <div
+      class="bg-pulse"
+      id="bgPulse"
+    ></div>
+    <div class="horizon"></div>
+    <div
+      class="horizon-lines"
+      id="horizonLines"
+    ></div>
+    <div class="retro-grid"></div>
+    <div class="scanlines"></div>
+    <div class="crt-curve"></div>
+    <div
+      class="glitch-layer"
+      id="glitch1"
+    ></div>
+    <div
+      class="glitch-layer"
+      id="glitch2"
+    ></div>
+    <div class="vignette"></div>
+
+    <div id="stars"></div>
+    <div id="shapes"></div>
+    <div
+      class="visualizer"
+      id="visualizer"
+    ></div>
+
+    <div class="fixed top-8 left-1/2 -translate-x-1/2 z-20">
+      <audio
+        id="audio"
+        controls
+      >
+        <source
+          src="drag_path.mp3"
+          type="audio/mpeg"
+        />
+      </audio>
+    </div>
+
+    <div class="progress-wrapper">
+      <div class="progress-track">
+        <div
+          class="progress-fill"
+          id="progress"
+        ></div>
+      </div>
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span id="totalTime">0:00</span>
+      </div>
+    </div>
+
+    <div
+      id="debug"
+      class="fixed top-4 right-4 bg-black/50 px-3 py-2"
+    ></div>
+
+    <div class="lyric-stage w-full h-screen flex items-center justify-center">
+      <div
+        class="relative w-full"
+        id="lyricsContainer"
+      >
+        <div class="lyric">When I see the devil's eyes</div>
+        <div class="lyric">A current travels down my spine</div>
+        <div class="lyric italic text-lg">He found me</div>
+        <div class="lyric">Seems as though I've lost again</div>
+        <div class="lyric">A story told ad nauseam</div>
+        <div class="lyric italic text-lg">He found me</div>
+        <div class="lyric">Maybe once or twice or three</div>
+        <div class="lyric">He's tried his hand at drowning me</div>
+        <div class="lyric text-5xl font-bold">But I'm still on fire</div>
+        <div class="lyric text-lg">At least I'm pretty sure</div>
+        <div class="lyric text-4xl">When I see the devil's eyes</div>
+        <div class="lyric">I'll look away and smile wide</div>
+        <div class="lyric text-3xl font-medium">You found me</div>
+        <div class="lyric">'Cause then I'll know you're also there</div>
+        <div class="lyric">'Cause proof is in the adversary</div>
+        <div class="lyric text-3xl font-medium">You found me</div>
+        <div class="lyric text-4xl font-semibold">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric">I left there on purpose, a sad sack</div>
+        <div class="lyric italic text-lg">(Laying on the surface)</div>
+        <div class="lyric text-5xl font-bold">Can you find me?</div>
+        <div class="lyric">I dug my heels into the gravel<br />as evidence</div>
+        <div class="lyric">
+          For you to unravel a drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-5xl font-bold">Can you find me?</div>
+        <div class="lyric italic text-lg">Would you—</div>
+        <div class="lyric italic text-2xl">Please, please hurry</div>
+        <div class="lyric italic text-lg">Would you—</div>
+        <div class="lyric italic text-2xl">Please, please hurry</div>
+        <div class="lyric text-4xl font-bold">
+          Can you, can you,<br />can you, can you?
+        </div>
+        <div class="lyric text-3xl">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric">I left there on purpose, a sad sack</div>
+        <div class="lyric italic text-lg">Laying on the surface</div>
+        <div class="lyric text-4xl font-bold">Can you find me?</div>
+        <div class="lyric">I dug my heels into the gravel<br />as evidence</div>
+        <div class="lyric">
+          For you to unravel the drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-5xl font-bold">Can you find me?</div>
+        <div class="lyric text-4xl font-bold">Can you find me?</div>
+        <div class="lyric text-4xl font-bold">Can you find me?</div>
+        <div class="lyric text-4xl font-bold">Can you find me?</div>
+        <div class="lyric text-3xl">Can you find me?</div>
+        <div class="lyric text-5xl font-bold">Then the sun begins to rise</div>
+        <div class="lyric text-4xl">We made it through the darkest night</div>
+        <div class="lyric text-5xl font-bold">You found me</div>
+      </div>
+    </div>
+
+    <script>
+      const TIMINGS = [
+        13, 17, 22.5, 26, 31, 36.5, 40, 45, 50, 55, 70.5, 75, 80, 84, 89, 94,
+        101.6, 107.7, 113.5, 118, 121, 128.3, 138.9, 152.2, 157, 163.9, 168,
+        207.1, 211.9, 219, 224.5, 230, 232.5, 239.5, 249.7, 252.4, 257.6, 262.7,
+        267.7, 282.9, 288.5, 293.7,
+      ];
+
+      const audio = document.getElementById("audio");
+      const debug = document.getElementById("debug");
+      const progress = document.getElementById("progress");
+      const currentTime = document.getElementById("currentTime");
+      const totalTime = document.getElementById("totalTime");
+      const lyrics = document.querySelectorAll(".lyric");
+      const visualizer = document.getElementById("visualizer");
+      const bgPulse = document.getElementById("bgPulse");
+      const glitch1 = document.getElementById("glitch1");
+      const glitch2 = document.getElementById("glitch2");
+
+      lyrics.forEach((l, i) => {
+        l.dataset.time = TIMINGS[i];
+        l.dataset.index = i;
+      });
+
+      let currentIndex = -1;
+      let beatVariation = 1;
+
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      const source = ctx.createMediaElementSource(audio);
+
+      analyser.fftSize = 128;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      for (let i = 0; i < 60; i++) {
+        const bar = document.createElement("div");
+        bar.className = "vis-bar";
+        visualizer.appendChild(bar);
+      }
+      const bars = document.querySelectorAll(".vis-bar");
+
+      // Create horizon lines
+      const horizonLines = document.getElementById("horizonLines");
+      for (let i = 0; i < 8; i++) {
+        const line = document.createElement("div");
+        line.className = "h-line";
+        line.style.bottom = i * 35 + 20 + "px";
+        line.style.animationDelay = i * 0.3 + "s";
+        horizonLines.appendChild(line);
+      }
+
+      // Create stars
+      const starsDiv = document.getElementById("stars");
+      for (let i = 0; i < 60; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        const size = Math.random() * 3 + 1;
+        star.style.width = size + "px";
+        star.style.height = size + "px";
+        star.style.left = Math.random() * 100 + "%";
+        star.style.top = Math.random() * 70 + "%";
+        star.style.animationDelay = Math.random() * 3 + "s";
+        star.style.animationDuration = Math.random() * 2 + 2 + "s";
+        starsDiv.appendChild(star);
+      }
+
+      // Create geometric shapes
+      const shapesDiv = document.getElementById("shapes");
+      for (let i = 0; i < 12; i++) {
+        const shape = document.createElement("div");
+        shape.className = "geo-shape";
+        const size = Math.random() * 40 + 20;
+        shape.style.width = size + "px";
+        shape.style.height = size + "px";
+        shape.style.left = Math.random() * 100 + "%";
+        shape.style.animationDelay = Math.random() * 20 + "s";
+        shape.style.animationDuration = Math.random() * 15 + 20 + "s";
+
+        if (Math.random() < 0.5) {
+          shape.style.borderRadius = "50%";
+        }
+        shapesDiv.appendChild(shape);
+      }
+
+      let lastBeat = 0;
+
+      function animate() {
+        analyser.getByteFrequencyData(dataArray);
+
+        bars.forEach((bar, i) => {
+          const value =
+            dataArray[Math.floor((i * dataArray.length) / bars.length)] || 0;
+          const height = Math.max(3, (value / 255) * 80);
+          bar.style.height = height + "px";
+        });
+
+        let bass = 0;
+        for (let i = 0; i < 12; i++) bass += dataArray[i];
+        bass /= 12;
+
+        const now = performance.now();
+        if (bass > 160 && now - lastBeat > 320) {
+          lastBeat = now;
+          const active = document.querySelector(".lyric.active");
+
+          if (active) {
+            const beatClass = `beat-${beatVariation}`;
+            active.classList.add(beatClass);
+            setTimeout(() => active.classList.remove(beatClass), 400);
+
+            beatVariation = (beatVariation % 3) + 1;
+
+            bgPulse.classList.add("beat");
+            setTimeout(() => bgPulse.classList.remove("beat"), 120);
+
+            if (Math.random() < 0.18) {
+              active.classList.add("glitch");
+              setTimeout(() => active.classList.remove("glitch"), 300);
+
+              const glitchLayer = Math.random() < 0.5 ? glitch1 : glitch2;
+              glitchLayer.classList.add("active");
+              setTimeout(() => glitchLayer.classList.remove("active"), 200);
+            }
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+      }
+
+      audio.addEventListener("loadedmetadata", () => {
+        totalTime.textContent = formatTime(audio.duration);
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+        progress.style.width = (t / audio.duration) * 100 + "%";
+        currentTime.textContent = formatTime(t);
+
+        // Lyric sync
+        for (let i = TIMINGS.length - 1; i >= 0; i--) {
+          if (t >= TIMINGS[i] && currentIndex !== i) {
+            activateLyric(i);
+            break;
+          }
+        }
+
+        debug.innerHTML = `
+        TIME : ${t.toFixed(2)}s<br>
+        LYRIC: ${currentIndex}<br>
+        OFFSET: ${globalOffset.toFixed(2)}s
+      `;
+      });
+
+      function activateLyric(index) {
+        lyrics.forEach((l) => l.classList.remove("active", "past", "upcoming"));
+
+        lyrics.forEach((l, i) => {
+          if (i < index) l.classList.add("past");
+          if (i === index) l.classList.add("active");
+          if (i === index + 1) l.classList.add("upcoming");
+        });
+
+        currentIndex = index;
+      }
+
+      audio.addEventListener("play", () => {
+        if (ctx.state === "suspended") ctx.resume();
+        animate();
+      });
+
+      audio.addEventListener("pause", () => {
+        ctx.suspend();
+      });
+    </script>
+  </body>
+</html>
