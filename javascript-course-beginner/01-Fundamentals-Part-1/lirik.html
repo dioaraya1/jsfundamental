@@ -2,272 +2,653 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Drag Path – Twenty One Pilots</title>
+    <title>Synchronized Lyrics Display</title>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-
-    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-      body {
-        background: radial-gradient(circle at center, #0a0a0a, #000);
-        overflow: hidden;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      /* === LYRIC BASE === */
+      body {
+        overflow: hidden;
+        font-family: "Inter", -apple-system, sans-serif;
+        background: #000;
+      }
+
+      /* Animated gradient background */
+      .animated-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          #0a0e27 0%,
+          #1a1a2e 25%,
+          #16213e 50%,
+          #0f3460 75%,
+          #1a1a2e 100%
+        );
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        z-index: 0;
+      }
+
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      /* Glowing orbs */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.4;
+        pointer-events: none;
+        animation: float 20s infinite ease-in-out;
+      }
+
+      .orb-1 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #ff6b6b, transparent);
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+      }
+
+      .orb-2 {
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, #4ecdc4, transparent);
+        bottom: -100px;
+        right: -100px;
+        animation-delay: 7s;
+      }
+
+      .orb-3 {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #95e1d3, transparent);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-delay: 14s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.4;
+        }
+        33% {
+          transform: translate(50px, -50px) scale(1.1);
+          opacity: 0.5;
+        }
+        66% {
+          transform: translate(-50px, 50px) scale(0.9);
+          opacity: 0.3;
+        }
+      }
+
+      /* Grid overlay */
+      .grid-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(
+            rgba(78, 205, 196, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(78, 205, 196, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Audio reactive bars */
+      .audio-bars {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 3px;
+        padding: 0 20px;
+        opacity: 0.2;
+        z-index: 1;
+      }
+
+      .bar {
+        width: 4px;
+        background: linear-gradient(to top, #4ecdc4, #95e1d3);
+        border-radius: 2px 2px 0 0;
+        transition: height 0.1s ease;
+      }
+
+      /* Lyric styles */
+      .lyric-container {
+        perspective: 1200px;
+        z-index: 10;
+      }
+
       .lyric {
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%) scale(0.95);
+        transform: translate(-50%, -50%) translateZ(-150px) rotateX(10deg);
         opacity: 0;
-        transition: all 0.6s ease;
-        white-space: nowrap;
-        letter-spacing: 0.12em;
+        transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+        white-space: pre-wrap;
+        text-align: center;
+        max-width: 90vw;
+        filter: blur(10px);
+        text-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
       }
 
       .lyric.active {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.1);
+        transform: translate(-50%, -50%) translateZ(0) rotateX(0deg);
+        filter: blur(0);
+        animation: glow 2s ease-in-out infinite;
       }
 
-      /* === MODES === */
-      .panic {
-        color: #f87171;
-        text-shadow: 0 0 12px rgba(248, 113, 113, 0.6);
+      .lyric.past {
+        opacity: 0.15;
+        transform: translate(-50%, -80%) translateZ(-100px) scale(0.85);
+        filter: blur(5px);
       }
 
-      .calm {
-        color: #c7d2fe;
-        text-shadow: 0 0 18px rgba(99, 102, 241, 0.5);
+      .lyric.upcoming {
+        opacity: 0.1;
+        transform: translate(-50%, -20%) translateZ(-120px) scale(0.9);
       }
 
-      .release {
-        color: #d1fae5;
-        letter-spacing: 0.25em;
-        text-shadow: 0 0 26px rgba(52, 211, 153, 0.6);
-      }
-
-      /* === BEAT MICRO INTERACTION === */
-      .pulse {
-        animation: pulse 0.25s ease;
-      }
-
-      @keyframes pulse {
-        0% {
-          transform: translate(-50%, -50%) scale(1.1);
+      @keyframes glow {
+        0%,
+        100% {
+          filter: blur(0) drop-shadow(0 0 20px currentColor);
         }
         50% {
-          transform: translate(-50%, -50%) scale(1.18);
+          filter: blur(0) drop-shadow(0 0 40px currentColor);
+        }
+      }
+
+      .beat-pulse {
+        animation: beatPulse 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      @keyframes beatPulse {
+        0% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+        }
+        30% {
+          transform: translate(-50%, -50%) translateZ(20px) scale(1.15);
         }
         100% {
-          transform: translate(-50%, -50%) scale(1.1);
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+        }
+      }
+
+      .glow-red {
+        color: #ff6b6b;
+        text-shadow: 0 0 30px rgba(255, 107, 107, 0.8),
+          0 0 60px rgba(255, 107, 107, 0.5), 0 0 90px rgba(255, 107, 107, 0.3);
+      }
+
+      .glow-cyan {
+        color: #4ecdc4;
+        text-shadow: 0 0 30px rgba(78, 205, 196, 0.8),
+          0 0 60px rgba(78, 205, 196, 0.5), 0 0 90px rgba(78, 205, 196, 0.3);
+      }
+
+      .glow-emerald {
+        color: #95e1d3;
+        text-shadow: 0 0 35px rgba(149, 225, 211, 0.9),
+          0 0 70px rgba(149, 225, 211, 0.6), 0 0 100px rgba(149, 225, 211, 0.4);
+      }
+
+      .glow-white {
+        color: #f8f9fa;
+        text-shadow: 0 0 20px rgba(248, 249, 250, 0.6),
+          0 0 40px rgba(248, 249, 250, 0.4);
+      }
+
+      .progress-container {
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 600px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        overflow: hidden;
+        z-index: 20;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #95e1d3);
+        width: 0%;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 20px rgba(78, 205, 196, 0.8);
+        position: relative;
+      }
+
+      .progress-bar::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -3px;
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+      }
+
+      audio {
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      #debug {
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(78, 205, 196, 0.3);
+      }
+
+      /* Particle system */
+      .particle {
+        position: fixed;
+        background: radial-gradient(
+          circle,
+          rgba(78, 205, 196, 0.8),
+          transparent
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        animation: particleFloat 12s infinite ease-in-out;
+      }
+
+      @keyframes particleFloat {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.4;
+        }
+        25% {
+          transform: translate(30px, -40px) scale(1.2);
+          opacity: 0.6;
+        }
+        50% {
+          transform: translate(-20px, -80px) scale(0.8);
+          opacity: 0.3;
+        }
+        75% {
+          transform: translate(-40px, -40px) scale(1.1);
+          opacity: 0.5;
+        }
+      }
+
+      /* Beat rings */
+      .beat-ring {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        border: 2px solid rgba(78, 205, 196, 0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+        z-index: 5;
+      }
+
+      .beat-ring.active {
+        animation: ringPulse 1s ease-out;
+      }
+
+      @keyframes ringPulse {
+        0% {
+          transform: translate(-50%, -50%) scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(3);
+          opacity: 0;
         }
       }
     </style>
   </head>
+  <body class="min-h-screen flex flex-col items-center justify-center">
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
 
-  <body
-    class="min-h-screen flex flex-col items-center justify-center text-slate-100 overflow-hidden"
-  >
-    <!-- AUDIO -->
-    <audio
-      id="audio"
-      controls
-      class="z-20 mb-6"
-    >
-      <source
-        src="drag_path.mp3"
-        type="audio/mpeg"
-      />
-    </audio>
+    <!-- Glowing orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
+    <!-- Grid overlay -->
+    <div class="grid-overlay"></div>
+
+    <!-- Beat rings -->
     <div
-      id="debug"
-      class="fixed top-4 left-4 bg-black/60 text-xs text-green-300 px-3 py-2 rounded z-50 font-mono"
+      class="beat-ring"
+      id="beatRing1"
+    ></div>
+    <div
+      class="beat-ring"
+      id="beatRing2"
     ></div>
 
-    <!-- LYRICS -->
+    <!-- Particles container -->
+    <div id="particles"></div>
+
+    <!-- Audio bars -->
     <div
-      class="relative w-full h-[65vh] overflow-hidden flex items-center justify-center"
+      class="audio-bars"
+      id="audioBars"
+    ></div>
+
+    <!-- Audio player -->
+    <div class="fixed top-8 z-20">
+      <audio
+        id="audio"
+        controls
+        class="rounded-lg"
+      >
+        <source
+          src="drag_path.mp3"
+          type="audio/mpeg"
+        />
+      </audio>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div
+        class="progress-bar"
+        id="progressBar"
+      ></div>
+    </div>
+
+    <!-- Debug info -->
+    <div
+      id="debug"
+      class="fixed top-4 right-4 bg-black/50 text-xs text-green-400 px-4 py-2 rounded-lg font-mono"
+    ></div>
+
+    <!-- Lyrics container -->
+    <div
+      class="lyric-container relative w-full h-[70vh] flex items-center justify-center"
     >
-      <div class="relative w-full text-center">
-        <!-- INTRO -->
-        <div class="lyric text-4xl font-light">When I see the devil's eyes</div>
-        <div class="lyric text-3xl">A current travels down my spine</div>
-        <div class="lyric italic">He found me</div>
-
-        <div class="lyric">Seems as though I've lost again</div>
-        <div class="lyric">A story told ad nauseam</div>
-        <div class="lyric italic">He found me</div>
-
-        <div class="lyric">Maybe once or twice or three</div>
-        <div class="lyric">He's tried his hand at drowning me</div>
-        <div class="lyric pulse text-orange-300 text-4xl">
+      <div
+        class="relative w-full"
+        id="lyricsContainer"
+      >
+        <div class="lyric text-4xl font-light glow-white">
+          When I see the devil's eyes
+        </div>
+        <div class="lyric text-3xl glow-white">
+          A current travels down my spine
+        </div>
+        <div class="lyric italic text-2xl glow-cyan">He found me</div>
+        <div class="lyric text-3xl glow-white">
+          Seems as though I've lost again
+        </div>
+        <div class="lyric text-3xl glow-white">A story told ad nauseam</div>
+        <div class="lyric italic text-2xl glow-cyan">He found me</div>
+        <div class="lyric text-3xl glow-white">
+          Maybe once or twice or three
+        </div>
+        <div class="lyric text-3xl glow-white">
+          He's tried his hand at drowning me
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">
           But I'm still on fire
         </div>
-        <div class="lyric">At least I'm pretty sure</div>
-
-        <!-- VERSE 2 -->
-        <div class="lyric">When I see the devil's eyes</div>
-        <div class="lyric">I'll look away and smile wide</div>
-        <div class="lyric font-semibold">You found me</div>
-
-        <div class="lyric">'Cause then I'll know you're also there</div>
-        <div class="lyric">'Cause proof is in the adversere</div>
-        <div class="lyric font-semibold">You found me</div>
-
-        <!-- CHORUS -->
-        <div class="lyric text-cyan-300 text-3xl">
-          A drag path etched in the surface as evidence
+        <div class="lyric text-2xl glow-white">At least I'm pretty sure</div>
+        <div class="lyric text-4xl glow-white">When I see the devil's eyes</div>
+        <div class="lyric text-3xl glow-white">
+          I'll look away and smile wide
         </div>
-        <div class="lyric">I left there on purpose, a sad sack</div>
-        <div class="lyric italic">(Laying on the surface)</div>
-
-        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
-
-        <div class="lyric">I dug my heels into the gravel as evidence</div>
-        <div class="lyric">
-          For you to unravel a drag path etched in the surface
+        <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+        <div class="lyric text-3xl glow-white">
+          'Cause then I'll know you're also there
         </div>
-
-        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
-
-        <!-- BREAK -->
-        <div class="lyric italic">Would you—</div>
-        <div class="lyric italic">Please, please hurry</div>
-        <div class="lyric italic">Would you—</div>
-        <div class="lyric italic">Please, please hurry</div>
-
-        <!-- BUILD -->
-        <div class="lyric shake text-red-300 text-3xl">
-          Can you, can you, can you, can you?
+        <div class="lyric text-3xl glow-white">
+          'Cause proof is in the adversary
         </div>
-
-        <div class="lyric">A drag path etched in the surface as evidence</div>
-        <div class="lyric">I left there on purpose, a sad sack</div>
-        <div class="lyric italic">Laying on the surface</div>
-
-        <div class="lyric shake text-red-300">Can you find me?</div>
-
-        <div class="lyric">I dug my heels into the gravel as evidence</div>
-        <div class="lyric">
-          For you to unravel the drag path etched in the surface
+        <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+        <div class="lyric text-4xl font-bold glow-cyan">
+          A drag path etched in the surface<br />as evidence
         </div>
-
-        <!-- REPEAT -->
-        <div class="lyric shake text-red-300 text-4xl">Can you find me?</div>
-        <div class="lyric shake text-red-300">Can you find me?</div>
-        <div class="lyric shake text-red-300">Can you find me?</div>
-        <div class="lyric shake text-red-300">Can you find me?</div>
-
-        <!-- OUTRO -->
-        <div class="lyric pulse text-emerald-300 text-4xl">
+        <div class="lyric text-3xl glow-white">
+          I left there on purpose, a sad sack
+        </div>
+        <div class="lyric italic text-2xl glow-white">
+          (Laying on the surface)
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-white">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          For you to unravel a drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric italic text-2xl glow-white">Would you—</div>
+        <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+        <div class="lyric italic text-2xl glow-white">Would you—</div>
+        <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+        <div class="lyric text-4xl font-bold glow-red">
+          Can you, can you,<br />can you, can you?
+        </div>
+        <div class="lyric text-3xl glow-white">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          I left there on purpose, a sad sack
+        </div>
+        <div class="lyric italic text-2xl glow-white">
+          Laying on the surface
+        </div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-white">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-3xl glow-white">
+          For you to unravel the drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+        <div class="lyric text-3xl glow-red">Can you find me?</div>
+        <div class="lyric text-5xl font-bold glow-emerald">
           Then the sun begins to rise
         </div>
-        <div class="lyric text-emerald-400">
+        <div class="lyric text-4xl glow-emerald">
           We made it through the darkest night
         </div>
-        <div class="lyric font-semibold text-3xl">You found me</div>
+        <div class="lyric text-5xl font-bold glow-emerald">You found me</div>
       </div>
     </div>
 
     <script>
-      /* ======================
-        SETUP
-      ====================== */
-      const audio = document.getElementById("audio");
-      const lyrics = document.querySelectorAll(".lyric");
-      const debug = document.getElementById("debug");
-
-      let current = -1;
-
-      /* ======================
-        BASE TIMINGS (SECONDS)
-      ====================== */
-      const timings = [
-        12.8, 16.6, 20.2, 24.5, 28.3, 32.0, 36.1, 40.0, 44.2, 48.5,
-
-        55.0, 58.8, 62.5, 66.6, 71.0, 75.2,
-
-        82.0, 88.2, 93.0, 97.2, 101.8, 108.0, 114.5,
-
-        120.5, 122.8, 126.0, 128.2,
-
-        133.5, 138.8, 145.0, 149.0, 153.5, 157.8, 164.0, 168.0, 171.5,
-
-        176.0, 178.2, 180.5, 182.8,
-
-        188.5, 194.5, 200.0,
+      const TIMINGS = [
+        13, 17, 22.5, 26, 31, 36.5, 40, 45, 50, 55, 70.5, 75, 80, 84, 89, 94,
+        101.6, 107.7, 113.5, 118, 121, 128.3, 138.9, 152.2, 157, 163.9, 168,
+        207.1, 211.9, 219, 224.5, 230, 232.5, 239.5, 249.7, 252.4, 257.6, 262.7,
+        267.7, 282.9, 288.5, 293.7,
       ];
 
-      /* === AUDIO ANALYSER === */
+      const audio = document.getElementById("audio");
+      const debug = document.getElementById("debug");
+      const progressBar = document.getElementById("progressBar");
+      const lyrics = document.querySelectorAll(".lyric");
+      const audioBars = document.getElementById("audioBars");
+      const beatRing1 = document.getElementById("beatRing1");
+      const beatRing2 = document.getElementById("beatRing2");
+
+      // Assign timings
+      lyrics.forEach((lyric, i) => {
+        lyric.dataset.time = TIMINGS[i];
+        lyric.dataset.index = i;
+      });
+
+      let currentIndex = -1;
+      let ringToggle = false;
+
+      // Audio context
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const ctx = new AudioContext();
       const analyser = ctx.createAnalyser();
       const source = ctx.createMediaElementSource(audio);
 
-      analyser.fftSize = 1024;
+      analyser.fftSize = 256;
       source.connect(analyser);
       analyser.connect(ctx.destination);
 
-      const data = new Uint8Array(analyser.frequencyBinCount);
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      // Create audio bars
+      for (let i = 0; i < 60; i++) {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.height = "5px";
+        audioBars.appendChild(bar);
+      }
+      const bars = document.querySelectorAll(".bar");
+
       let lastBeat = 0;
 
-      function detectBeat() {
-        analyser.getByteFrequencyData(data);
-        let bass = 0;
-        for (let i = 5; i < 40; i++) bass += data[i];
-        bass /= 35;
+      function animate() {
+        analyser.getByteFrequencyData(dataArray);
 
-        const now = performance.now();
-        if (bass > 155 && now - lastBeat > 300) {
-          lastBeat = now;
-          const active = document.querySelector(".lyric.active");
-          if (active) {
-            active.classList.add("pulse");
-            setTimeout(() => active.classList.remove("pulse"), 200);
-          }
-        }
-        requestAnimationFrame(detectBeat);
-      }
+        // Update bars
+        bars.forEach((bar, i) => {
+          const value = dataArray[i] || 0;
+          const height = (value / 255) * 80 + 5;
+          bar.style.height = height + "px";
 
-      audio.addEventListener("play", () => {
-        ctx.resume();
-        detectBeat();
-      });
-
-      audio.addEventListener("timeupdate", () => {
-        const t = audio.currentTime;
-
-        lyrics.forEach((line, i) => {
-          if (
-            t >= timings[i] &&
-            t < (timings[i + 1] || Infinity) &&
-            current !== i
-          ) {
-            if (current >= 0)
-              lyrics[current].classList.remove(
-                "active",
-                "panic",
-                "calm",
-                "release"
-              );
-
-            line.classList.add("active");
-            current = i;
-
-            if (t < 80) line.classList.add("panic");
-            else if (t < 150) line.classList.add("calm");
-            else line.classList.add("release");
+          // Color based on frequency
+          if (i < 20) {
+            bar.style.background = "linear-gradient(to top, #ff6b6b, #ff8787)";
+          } else if (i < 40) {
+            bar.style.background = "linear-gradient(to top, #4ecdc4, #6ee7de)";
+          } else {
+            bar.style.background = "linear-gradient(to top, #95e1d3, #b3f0e6)";
           }
         });
 
-        debug.innerHTML = `⏱ ${t.toFixed(2)}s | 🎤 ${current}`;
+        // Beat detection
+        let bass = 0;
+        for (let i = 0; i < 10; i++) bass += dataArray[i];
+        bass /= 10;
+
+        const now = performance.now();
+        if (bass > 160 && now - lastBeat > 300) {
+          lastBeat = now;
+          const active = document.querySelector(".lyric.active");
+          if (active) {
+            active.classList.add("beat-pulse");
+            setTimeout(() => active.classList.remove("beat-pulse"), 400);
+          }
+
+          // Trigger beat ring
+          const ring = ringToggle ? beatRing1 : beatRing2;
+          ring.classList.add("active");
+          setTimeout(() => ring.classList.remove("active"), 1000);
+          ringToggle = !ringToggle;
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+        progressBar.style.width = (t / audio.duration) * 100 + "%";
+
+        let newIndex = -1;
+        for (let i = TIMINGS.length - 1; i >= 0; i--) {
+          if (t >= TIMINGS[i]) {
+            newIndex = i;
+            break;
+          }
+        }
+
+        if (newIndex !== currentIndex) {
+          lyrics.forEach((l) =>
+            l.classList.remove("active", "past", "upcoming")
+          );
+
+          if (newIndex >= 0) {
+            lyrics[newIndex].classList.add("active");
+            for (let i = 0; i < newIndex; i++) {
+              if (i >= newIndex - 2) lyrics[i].classList.add("past");
+            }
+            if (newIndex + 1 < lyrics.length) {
+              lyrics[newIndex + 1].classList.add("upcoming");
+            }
+          }
+          currentIndex = newIndex;
+        }
+
+        debug.textContent = `⏱ ${t.toFixed(2)}s | 🎤 ${currentIndex + 1}/${
+          lyrics.length
+        }`;
       });
+
+      audio.addEventListener("play", () => {
+        ctx.resume();
+        animate();
+      });
+
+      // Create particles
+      const particlesDiv = document.getElementById("particles");
+      for (let i = 0; i < 25; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        const size = Math.random() * 6 + 2;
+        particle.style.width = size + "px";
+        particle.style.height = size + "px";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.top = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 12 + "s";
+        particle.style.animationDuration = Math.random() * 8 + 10 + "s";
+        particlesDiv.appendChild(particle);
+      }
     </script>
   </body>
 </html>

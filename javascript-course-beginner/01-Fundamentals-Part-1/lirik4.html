@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Drag Path - Twenty One Pilots</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        overflow: hidden;
+        font-family: "JetBrains Mono", monospace;
+        background: #0a0a0f;
+        color: #e0e0e8;
+      }
+
+      /* Retro CRT Background */
+      .retro-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          #1a1a2e 0%,
+          #0f0f1a 50%,
+          #050508 100%
+        );
+        z-index: 0;
+      }
+
+      /* Beat-reactive background pulse */
+      .bg-pulse {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          rgba(100, 100, 140, 0.05),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.15s ease-out;
+        z-index: 1;
+      }
+
+      .bg-pulse.beat {
+        opacity: 1;
+      }
+
+      /* CRT scanlines */
+      .scanlines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+        z-index: 100;
+        animation: scanlineMove 8s linear infinite;
+      }
+
+      @keyframes scanlineMove {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(10px);
+        }
+      }
+
+      /* Pixel grid overlay */
+      .pixel-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(
+            rgba(100, 100, 140, 0.02) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(100, 100, 140, 0.02) 1px, transparent 1px);
+        background-size: 20px 20px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Glitch effect layers */
+      .glitch-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 99;
+        mix-blend-mode: screen;
+      }
+
+      .glitch-layer.active {
+        animation: glitchFlash 0.3s steps(2, end);
+      }
+
+      @keyframes glitchFlash {
+        0% {
+          opacity: 0;
+          transform: translate(0, 0);
+        }
+        33% {
+          opacity: 0.8;
+          transform: translate(-3px, 2px);
+          background: rgba(150, 150, 180, 0.1);
+        }
+        66% {
+          opacity: 0.6;
+          transform: translate(2px, -2px);
+          background: rgba(120, 120, 160, 0.08);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(0, 0);
+        }
+      }
+
+      /* Ambient glow - subtle */
+      .ambient-glow {
+        position: fixed;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        filter: blur(150px);
+        opacity: 0.15;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .glow-1 {
+        background: radial-gradient(
+          circle,
+          rgba(100, 120, 160, 0.3),
+          transparent
+        );
+        top: -100px;
+        left: -100px;
+        animation: glowFloat1 12s ease-in-out infinite;
+      }
+
+      .glow-2 {
+        background: radial-gradient(
+          circle,
+          rgba(90, 100, 140, 0.25),
+          transparent
+        );
+        bottom: -100px;
+        right: -100px;
+        animation: glowFloat2 15s ease-in-out infinite;
+      }
+
+      @keyframes glowFloat1 {
+        0%,
+        100% {
+          transform: translate(0, 0);
+          opacity: 0.15;
+        }
+        50% {
+          transform: translate(30px, -30px);
+          opacity: 0.25;
+        }
+      }
+
+      @keyframes glowFloat2 {
+        0%,
+        100% {
+          transform: translate(0, 0);
+          opacity: 0.12;
+        }
+        50% {
+          transform: translate(-30px, 30px);
+          opacity: 0.22;
+        }
+      }
+
+      /* Lyric stage */
+      .lyric-stage {
+        position: relative;
+        perspective: 1000px;
+        z-index: 10;
+      }
+
+      .lyric {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) translateZ(-80px);
+        opacity: 0;
+        transition: all 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+        white-space: pre-wrap;
+        text-align: center;
+        max-width: 85vw;
+        filter: blur(6px);
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        line-height: 1.5;
+        color: #b8b8c8;
+        text-shadow: 0 0 20px rgba(184, 184, 200, 0.3);
+      }
+
+      /* Active lyric */
+      .lyric.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateZ(0);
+        filter: blur(0);
+        color: #e8e8f0;
+        text-shadow: 0 0 30px rgba(232, 232, 240, 0.4),
+          0 0 60px rgba(232, 232, 240, 0.2), 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Glitch text effect */
+      .lyric.active.glitch {
+        animation: textGlitch 0.25s steps(3);
+      }
+
+      @keyframes textGlitch {
+        0% {
+          transform: translate(-50%, -50%) translateZ(0);
+          opacity: 1;
+        }
+        25% {
+          transform: translate(calc(-50% - 2px), calc(-50% + 1px)) translateZ(0);
+          opacity: 0.9;
+          text-shadow: -2px 0 rgba(150, 150, 180, 0.5),
+            2px 0 rgba(120, 120, 160, 0.5);
+        }
+        50% {
+          transform: translate(calc(-50% + 2px), calc(-50% - 1px)) translateZ(0);
+          opacity: 0.95;
+        }
+        75% {
+          transform: translate(calc(-50% - 1px), -50%) translateZ(0);
+          opacity: 0.92;
+        }
+        100% {
+          transform: translate(-50%, -50%) translateZ(0);
+          opacity: 1;
+        }
+      }
+
+      /* Subtle beat variations */
+      .lyric.active.beat-1 {
+        animation: beatSubtle1 0.4s ease-out;
+      }
+
+      .lyric.active.beat-2 {
+        animation: beatSubtle2 0.35s ease-out;
+      }
+
+      .lyric.active.beat-3 {
+        animation: beatSubtle3 0.45s ease-out;
+      }
+
+      @keyframes beatSubtle1 {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0) scale(1);
+        }
+        40% {
+          transform: translate(-50%, -50%) translateZ(5px) scale(1.03);
+        }
+      }
+
+      @keyframes beatSubtle2 {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0);
+          letter-spacing: 0.05em;
+        }
+        50% {
+          transform: translate(-50%, -50%) translateZ(3px);
+          letter-spacing: 0.08em;
+        }
+      }
+
+      @keyframes beatSubtle3 {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) translateZ(0);
+          filter: blur(0);
+        }
+        30% {
+          transform: translate(-50%, calc(-50% - 2px)) translateZ(4px);
+          filter: blur(0) brightness(1.15);
+        }
+      }
+
+      /* Past and upcoming */
+      .lyric.past {
+        opacity: 0.08;
+        transform: translate(-50%, -60%) translateZ(-40px) scale(0.92);
+        filter: blur(3px);
+      }
+
+      .lyric.upcoming {
+        opacity: 0.2;
+        transform: translate(-50%, -40%) translateZ(-30px) scale(0.96);
+        filter: blur(2px);
+      }
+
+      /* Minimalist visualizer */
+      .visualizer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 3px;
+        padding: 0 60px;
+        z-index: 5;
+        opacity: 0.15;
+      }
+
+      .vis-bar {
+        flex: 1;
+        max-width: 6px;
+        background: linear-gradient(
+          to top,
+          rgba(140, 140, 170, 0.6) 0%,
+          rgba(120, 120, 150, 0.3) 100%
+        );
+        border-radius: 2px 2px 0 0;
+        transition: height 0.1s ease-out;
+      }
+
+      /* Clean progress bar */
+      .progress-wrapper {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        max-width: 600px;
+        z-index: 20;
+      }
+
+      .progress-track {
+        height: 2px;
+        background: rgba(200, 200, 220, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: rgba(180, 180, 210, 0.6);
+        width: 0%;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 10px rgba(180, 180, 210, 0.3);
+        position: relative;
+      }
+
+      .progress-fill::after {
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        background: rgba(220, 220, 240, 0.9);
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(220, 220, 240, 0.5);
+      }
+
+      .time-display {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(200, 200, 220, 0.4);
+        font-weight: 400;
+        letter-spacing: 0.1em;
+      }
+
+      /* Audio player */
+      .audio-container {
+        position: fixed;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+      }
+
+      audio {
+        border-radius: 8px;
+        background: rgba(20, 20, 30, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(150, 150, 180, 0.15);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Debug */
+      #debug {
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(150, 150, 180, 0.2);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        color: rgba(200, 200, 220, 0.6);
+      }
+
+      /* Vignette */
+      .vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 40%,
+          rgba(0, 0, 0, 0.5) 100%
+        );
+        pointer-events: none;
+        z-index: 95;
+      }
+
+      /* Pixel particles */
+      .pixel-particle {
+        position: fixed;
+        width: 2px;
+        height: 2px;
+        background: rgba(160, 160, 190, 0.3);
+        pointer-events: none;
+        animation: pixelDrift 20s infinite linear;
+      }
+
+      @keyframes pixelDrift {
+        0% {
+          transform: translate(0, 0);
+          opacity: 0.2;
+        }
+        50% {
+          transform: translate(-20px, -100px);
+          opacity: 0.4;
+        }
+        100% {
+          transform: translate(0, -200px);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background layers -->
+    <div class="retro-bg"></div>
+    <div
+      class="bg-pulse"
+      id="bgPulse"
+    ></div>
+
+    <!-- Ambient glows -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Pixel grid -->
+    <div class="pixel-grid"></div>
+
+    <!-- Scanlines -->
+    <div class="scanlines"></div>
+
+    <!-- Glitch layers -->
+    <div
+      class="glitch-layer"
+      id="glitch1"
+    ></div>
+    <div
+      class="glitch-layer"
+      id="glitch2"
+    ></div>
+
+    <!-- Vignette -->
+    <div class="vignette"></div>
+
+    <!-- Particles -->
+    <div id="particles"></div>
+
+    <!-- Visualizer -->
+    <div
+      class="visualizer"
+      id="visualizer"
+    ></div>
+
+    <!-- Audio player -->
+    <div class="audio-container">
+      <audio
+        id="audio"
+        controls
+      >
+        <source
+          src="drag_path.mp3"
+          type="audio/mpeg"
+        />
+      </audio>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-wrapper">
+      <div class="progress-track">
+        <div
+          class="progress-fill"
+          id="progress"
+        ></div>
+      </div>
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span id="totalTime">0:00</span>
+      </div>
+    </div>
+
+    <!-- Debug -->
+    <div
+      id="debug"
+      class="fixed top-4 right-4 bg-black/40 px-3 py-2 rounded"
+    ></div>
+
+    <!-- Lyrics stage -->
+    <div class="lyric-stage w-full h-screen flex items-center justify-center">
+      <div
+        class="relative w-full"
+        id="lyricsContainer"
+      >
+        <div class="lyric text-3xl">When I see the devil's eyes</div>
+        <div class="lyric text-2xl">A current travels down my spine</div>
+        <div class="lyric italic text-xl">He found me</div>
+        <div class="lyric text-2xl">Seems as though I've lost again</div>
+        <div class="lyric text-2xl">A story told ad nauseam</div>
+        <div class="lyric italic text-xl">He found me</div>
+        <div class="lyric text-2xl">Maybe once or twice or three</div>
+        <div class="lyric text-2xl">He's tried his hand at drowning me</div>
+        <div class="lyric text-4xl font-semibold">But I'm still on fire</div>
+        <div class="lyric text-xl">At least I'm pretty sure</div>
+        <div class="lyric text-3xl">When I see the devil's eyes</div>
+        <div class="lyric text-2xl">I'll look away and smile wide</div>
+        <div class="lyric font-medium text-2xl">You found me</div>
+        <div class="lyric text-2xl">
+          'Cause then I'll know you're also there
+        </div>
+        <div class="lyric text-2xl">'Cause proof is in the adversary</div>
+        <div class="lyric font-medium text-2xl">You found me</div>
+        <div class="lyric text-3xl font-medium">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric text-2xl">I left there on purpose, a sad sack</div>
+        <div class="lyric italic text-lg">(Laying on the surface)</div>
+        <div class="lyric text-4xl font-semibold">Can you find me?</div>
+        <div class="lyric text-2xl">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-2xl">
+          For you to unravel a drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-4xl font-semibold">Can you find me?</div>
+        <div class="lyric italic text-lg">Would you—</div>
+        <div class="lyric italic text-2xl">Please, please hurry</div>
+        <div class="lyric italic text-lg">Would you—</div>
+        <div class="lyric italic text-2xl">Please, please hurry</div>
+        <div class="lyric text-3xl font-medium">
+          Can you, can you,<br />can you, can you?
+        </div>
+        <div class="lyric text-2xl">
+          A drag path etched in the surface<br />as evidence
+        </div>
+        <div class="lyric text-2xl">I left there on purpose, a sad sack</div>
+        <div class="lyric italic text-lg">Laying on the surface</div>
+        <div class="lyric text-3xl font-semibold">Can you find me?</div>
+        <div class="lyric text-2xl">
+          I dug my heels into the gravel<br />as evidence
+        </div>
+        <div class="lyric text-2xl">
+          For you to unravel the drag path<br />etched in the surface
+        </div>
+        <div class="lyric text-4xl font-semibold">Can you find me?</div>
+        <div class="lyric text-3xl font-semibold">Can you find me?</div>
+        <div class="lyric text-3xl font-semibold">Can you find me?</div>
+        <div class="lyric text-3xl font-semibold">Can you find me?</div>
+        <div class="lyric text-2xl">Can you find me?</div>
+        <div class="lyric text-4xl font-semibold">
+          Then the sun begins to rise
+        </div>
+        <div class="lyric text-3xl">We made it through the darkest night</div>
+        <div class="lyric text-4xl font-semibold">You found me</div>
+      </div>
+    </div>
+
+    <script>
+      const TIMINGS = [
+        13, 17, 22.5, 26, 31, 36.5, 40, 45, 50, 55, 70.5, 75, 80, 84, 89, 94,
+        101.6, 107.7, 113.5, 118, 121, 128.3, 138.9, 152.2, 157, 163.9, 168,
+        207.1, 211.9, 219, 224.5, 230, 232.5, 239.5, 249.7, 252.4, 257.6, 262.7,
+        267.7, 282.9, 288.5, 293.7,
+      ];
+
+      const audio = document.getElementById("audio");
+      const debug = document.getElementById("debug");
+      const progress = document.getElementById("progress");
+      const currentTime = document.getElementById("currentTime");
+      const totalTime = document.getElementById("totalTime");
+      const lyrics = document.querySelectorAll(".lyric");
+      const visualizer = document.getElementById("visualizer");
+      const bgPulse = document.getElementById("bgPulse");
+      const glitch1 = document.getElementById("glitch1");
+      const glitch2 = document.getElementById("glitch2");
+
+      lyrics.forEach((l, i) => {
+        l.dataset.time = TIMINGS[i];
+        l.dataset.index = i;
+      });
+
+      let currentIndex = -1;
+      let beatVariation = 1;
+
+      // Audio context
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      const source = ctx.createMediaElementSource(audio);
+
+      analyser.fftSize = 128;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      // Create visualizer bars
+      for (let i = 0; i < 50; i++) {
+        const bar = document.createElement("div");
+        bar.className = "vis-bar";
+        visualizer.appendChild(bar);
+      }
+      const bars = document.querySelectorAll(".vis-bar");
+
+      let lastBeat = 0;
+      let glitchTimeout = null;
+
+      function animate() {
+        analyser.getByteFrequencyData(dataArray);
+
+        bars.forEach((bar, i) => {
+          const value =
+            dataArray[Math.floor((i * dataArray.length) / bars.length)] || 0;
+          const height = Math.max(2, (value / 255) * 60);
+          bar.style.height = height + "px";
+        });
+
+        // Beat detection with variations
+        let bass = 0;
+        for (let i = 0; i < 10; i++) bass += dataArray[i];
+        bass /= 10;
+
+        const now = performance.now();
+        if (bass > 165 && now - lastBeat > 350) {
+          lastBeat = now;
+          const active = document.querySelector(".lyric.active");
+
+          if (active) {
+            // Rotate through beat variations
+            const beatClass = `beat-${beatVariation}`;
+            active.classList.add(beatClass);
+            setTimeout(() => active.classList.remove(beatClass), 500);
+
+            beatVariation = (beatVariation % 3) + 1;
+
+            // Background pulse
+            bgPulse.classList.add("beat");
+            setTimeout(() => bgPulse.classList.remove("beat"), 150);
+
+            // Random glitch effect (15% chance)
+            if (Math.random() < 0.15) {
+              active.classList.add("glitch");
+              setTimeout(() => active.classList.remove("glitch"), 250);
+
+              const glitchLayer = Math.random() < 0.5 ? glitch1 : glitch2;
+              glitchLayer.classList.add("active");
+              setTimeout(() => glitchLayer.classList.remove("active"), 300);
+            }
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+      }
+
+      audio.addEventListener("loadedmetadata", () => {
+        totalTime.textContent = formatTime(audio.duration);
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+        progress.style.width = (t / audio.duration) * 100 + "%";
+        currentTime.textContent = formatTime(t);
+
+        let newIndex = -1;
+        for (let i = TIMINGS.length - 1; i >= 0; i--) {
+          if (t >= TIMINGS[i]) {
+            newIndex = i;
+            break;
+          }
+        }
+
+        if (newIndex !== currentIndex) {
+          lyrics.forEach((l) =>
+            l.classList.remove("active", "past", "upcoming")
+          );
+
+          if (newIndex >= 0) {
+            lyrics[newIndex].classList.add("active");
+            for (let i = 0; i < newIndex; i++) {
+              if (i >= newIndex - 1) lyrics[i].classList.add("past");
+            }
+            if (newIndex + 1 < lyrics.length) {
+              lyrics[newIndex + 1].classList.add("upcoming");
+            }
+          }
+          currentIndex = newIndex;
+        }
+
+        debug.textContent = `${t.toFixed(1)}s • ${currentIndex + 1}/${
+          lyrics.length
+        }`;
+      });
+
+      audio.addEventListener("play", () => {
+        ctx.resume();
+        animate();
+      });
+
+      // Create pixel particles
+      const particlesDiv = document.getElementById("particles");
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement("div");
+        p.className = "pixel-particle";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = Math.random() * 100 + "%";
+        p.style.animationDelay = Math.random() * 20 + "s";
+        p.style.animationDuration = Math.random() * 15 + 15 + "s";
+        particlesDiv.appendChild(p);
+      }
+    </script>
+  </body>
+</html>

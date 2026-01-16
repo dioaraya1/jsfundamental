@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Drag Path - Twenty One Pilots</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      font-family: 'Space Grotesk', sans-serif;
+      background: #000;
+      color: #fff;
+    }
+
+    /* Professional gradient background */
+    .bg-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .bg-gradient {
+      background: radial-gradient(ellipse at top left, #1a0a2e 0%, #0f0518 50%, #000 100%);
+      animation: bgPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes bgPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
+    }
+
+    /* Noise texture overlay */
+    .noise-overlay {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      mix-blend-mode: overlay;
+    }
+
+    /* Glowing accent lights */
+    .accent-light {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0;
+      pointer-events: none;
+      animation: lightPulse 6s ease-in-out infinite;
+    }
+
+    .light-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.3), transparent 70%);
+      top: -200px;
+      left: -200px;
+      animation-delay: 0s;
+    }
+
+    .light-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
+      bottom: -150px;
+      right: -150px;
+      animation-delay: 2s;
+    }
+
+    .light-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(167, 139, 250, 0.2), transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: 4s;
+    }
+
+    @keyframes lightPulse {
+      0%, 100% { 
+        opacity: 0.3;
+        transform: translate(0, 0) scale(1);
+      }
+      50% { 
+        opacity: 0.6;
+        transform: translate(20px, -20px) scale(1.1);
+      }
+    }
+
+    /* Scanlines for retro-modern feel */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.015) 2px,
+        rgba(255, 255, 255, 0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.3;
+    }
+
+    /* Lyric container with depth */
+    .lyric-stage {
+      position: relative;
+      perspective: 1500px;
+      z-index: 10;
+      transform-style: preserve-3d;
+    }
+
+    .lyric {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) translateZ(-200px) rotateY(-15deg);
+      opacity: 0;
+      transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+      white-space: pre-wrap;
+      text-align: center;
+      max-width: 85vw;
+      filter: blur(12px) brightness(0.5);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1.4;
+    }
+
+    /* Active lyric - main spotlight */
+    .lyric.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) translateZ(0) rotateY(0deg);
+      filter: blur(0) brightness(1.2);
+      animation: textGlow 3s ease-in-out infinite, letterAppear 0.8s ease-out;
+    }
+
+    @keyframes textGlow {
+      0%, 100% { 
+        filter: blur(0) brightness(1.2) drop-shadow(0 0 25px currentColor);
+      }
+      50% { 
+        filter: blur(0) brightness(1.4) drop-shadow(0 0 45px currentColor);
+      }
+    }
+
+    @keyframes letterAppear {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateZ(-50px);
+        letter-spacing: 0.3em;
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateZ(0);
+        letter-spacing: 0.02em;
+      }
+    }
+
+    /* Past lyrics - fade out with style */
+    .lyric.past {
+      opacity: 0.08;
+      transform: translate(-50%, -90%) translateZ(-150px) rotateX(-20deg) scale(0.75);
+      filter: blur(8px) brightness(0.3);
+    }
+
+    /* Upcoming lyric - teaser */
+    .lyric.upcoming {
+      opacity: 0.15;
+      transform: translate(-50%, -10%) translateZ(-100px) rotateY(8deg) scale(0.92);
+      filter: blur(6px) brightness(0.6);
+    }
+
+    /* Beat pulse - energetic response */
+    .beat-pulse {
+      animation: beatReact 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes beatReact {
+      0% { 
+        transform: translate(-50%, -50%) translateZ(0) scale(1);
+      }
+      40% { 
+        transform: translate(-50%, -50%) translateZ(40px) scale(1.18);
+        filter: blur(0) brightness(1.6) drop-shadow(0 0 60px currentColor);
+      }
+      100% { 
+        transform: translate(-50%, -50%) translateZ(0) scale(1);
+      }
+    }
+
+    /* Color schemes matching genre */
+    .glow-red {
+      color: #ec4899;
+      text-shadow: 
+        0 0 30px rgba(236, 72, 153, 0.9),
+        0 0 60px rgba(236, 72, 153, 0.6),
+        0 0 90px rgba(236, 72, 153, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .glow-cyan {
+      color: #06b6d4;
+      text-shadow: 
+        0 0 30px rgba(6, 182, 212, 0.9),
+        0 0 60px rgba(6, 182, 212, 0.6),
+        0 0 90px rgba(6, 182, 212, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .glow-emerald {
+      color: #10b981;
+      text-shadow: 
+        0 0 35px rgba(16, 185, 129, 1),
+        0 0 70px rgba(16, 185, 129, 0.7),
+        0 0 100px rgba(16, 185, 129, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .glow-white {
+      color: #f1f5f9;
+      text-shadow: 
+        0 0 25px rgba(241, 245, 249, 0.7),
+        0 0 50px rgba(241, 245, 249, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .glow-purple {
+      color: #a78bfa;
+      text-shadow: 
+        0 0 30px rgba(167, 139, 250, 0.9),
+        0 0 60px rgba(167, 139, 250, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Audio visualizer bars */
+    .visualizer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 2px;
+      padding: 0 40px;
+      z-index: 5;
+      opacity: 0.25;
+    }
+
+    .vis-bar {
+      flex: 1;
+      max-width: 8px;
+      background: linear-gradient(to top, 
+        rgba(236, 72, 153, 0.8) 0%,
+        rgba(59, 130, 246, 0.6) 50%,
+        rgba(167, 139, 250, 0.4) 100%
+      );
+      border-radius: 3px 3px 0 0;
+      transition: height 0.08s ease-out;
+      box-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+    }
+
+    /* Progress bar - sleek design */
+    .progress-wrapper {
+      position: fixed;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      max-width: 700px;
+      z-index: 20;
+    }
+
+    .progress-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, 
+        #ec4899 0%, 
+        #3b82f6 50%, 
+        #a78bfa 100%
+      );
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.6);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
+    }
+
+    .time-display {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    /* Audio player styling */
+    .audio-container {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+    }
+
+    audio {
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    audio::-webkit-media-controls-panel {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* Debug panel */
+    #debug {
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Floating particles - subtle */
+    .particle {
+      position: fixed;
+      width: 3px;
+      height: 3px;
+      background: radial-gradient(circle, rgba(167, 139, 250, 0.8), transparent);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleDrift 15s infinite ease-in-out;
+      opacity: 0.4;
+    }
+
+    @keyframes particleDrift {
+      0%, 100% { 
+        transform: translate(0, 0);
+        opacity: 0.2;
+      }
+      25% { 
+        transform: translate(40px, -60px);
+        opacity: 0.6;
+      }
+      50% { 
+        transform: translate(-30px, -120px);
+        opacity: 0.3;
+      }
+      75% { 
+        transform: translate(-50px, -80px);
+        opacity: 0.5;
+      }
+    }
+
+    /* Beat reaction ring */
+    .beat-ring {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(236, 72, 153, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 8;
+    }
+
+    .beat-ring.pulse {
+      animation: ringExpand 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes ringExpand {
+      0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 1;
+        border-width: 3px;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+        border-width: 1px;
+      }
+    }
+
+    /* Vignette effect */
+    .vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.7) 100%);
+      pointer-events: none;
+      z-index: 90;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Background layers -->
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer noise-overlay"></div>
+  
+  <!-- Accent lights -->
+  <div class="accent-light light-1"></div>
+  <div class="accent-light light-2"></div>
+  <div class="accent-light light-3"></div>
+  
+  <!-- Scanlines -->
+  <div class="scanlines"></div>
+  
+  <!-- Vignette -->
+  <div class="vignette"></div>
+  
+  <!-- Beat rings -->
+  <div class="beat-ring" id="ring1"></div>
+  <div class="beat-ring" id="ring2"></div>
+  
+  <!-- Particles -->
+  <div id="particles"></div>
+  
+  <!-- Visualizer -->
+  <div class="visualizer" id="visualizer"></div>
+
+  <!-- Audio player -->
+  <div class="audio-container">
+    <audio id="audio" controls>
+      <source src="drag_path.mp3" type="audio/mpeg" />
+    </audio>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrapper">
+    <div class="progress-track">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+    <div class="time-display">
+      <span id="currentTime">0:00</span>
+      <span id="totalTime">0:00</span>
+    </div>
+  </div>
+
+  <!-- Debug -->
+  <div id="debug"></div>
+
+  <!-- Lyrics stage -->
+  <div class="lyric-stage w-full h-screen flex items-center justify-center">
+    <div class="relative w-full" id="lyricsContainer">
+      <div class="lyric text-4xl font-light glow-white">When I see the devil's eyes</div>
+      <div class="lyric text-3xl glow-white">A current travels down my spine</div>
+      <div class="lyric italic text-2xl glow-cyan">He found me</div>
+      <div class="lyric text-3xl glow-white">Seems as though I've lost again</div>
+      <div class="lyric text-3xl glow-white">A story told ad nauseam</div>
+      <div class="lyric italic text-2xl glow-cyan">He found me</div>
+      <div class="lyric text-3xl glow-white">Maybe once or twice or three</div>
+      <div class="lyric text-3xl glow-white">He's tried his hand at drowning me</div>
+      <div class="lyric text-5xl font-bold glow-red">But I'm still on fire</div>
+      <div class="lyric text-2xl glow-purple">At least I'm pretty sure</div>
+      <div class="lyric text-4xl glow-white">When I see the devil's eyes</div>
+      <div class="lyric text-3xl glow-white">I'll look away and smile wide</div>
+      <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+      <div class="lyric text-3xl glow-white">'Cause then I'll know you're also there</div>
+      <div class="lyric text-3xl glow-white">'Cause proof is in the adversary</div>
+      <div class="lyric font-semibold text-3xl glow-cyan">You found me</div>
+      <div class="lyric text-4xl font-bold glow-cyan">A drag path etched in the surface<br>as evidence</div>
+      <div class="lyric text-3xl glow-purple">I left there on purpose, a sad sack</div>
+      <div class="lyric italic text-2xl glow-white">(Laying on the surface)</div>
+      <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-3xl glow-white">I dug my heels into the gravel<br>as evidence</div>
+      <div class="lyric text-3xl glow-purple">For you to unravel a drag path<br>etched in the surface</div>
+      <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric italic text-2xl glow-white">Would you—</div>
+      <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+      <div class="lyric italic text-2xl glow-white">Would you—</div>
+      <div class="lyric italic text-3xl glow-cyan">Please, please hurry</div>
+      <div class="lyric text-4xl font-bold glow-red">Can you, can you,<br>can you, can you?</div>
+      <div class="lyric text-3xl glow-purple">A drag path etched in the surface<br>as evidence</div>
+      <div class="lyric text-3xl glow-white">I left there on purpose, a sad sack</div>
+      <div class="lyric italic text-2xl glow-purple">Laying on the surface</div>
+      <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-3xl glow-white">I dug my heels into the gravel<br>as evidence</div>
+      <div class="lyric text-3xl glow-purple">For you to unravel the drag path<br>etched in the surface</div>
+      <div class="lyric text-5xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-4xl font-bold glow-red">Can you find me?</div>
+      <div class="lyric text-3xl glow-red">Can you find me?</div>
+      <div class="lyric text-5xl font-bold glow-emerald">Then the sun begins to rise</div>
+      <div class="lyric text-4xl glow-emerald">We made it through the darkest night</div>
+      <div class="lyric text-5xl font-bold glow-emerald">You found me</div>
+    </div>
+  </div>
+
+  <script>
+    const TIMINGS = [13,17,22.5,26,31,36.5,40,45,50,55,70.5,75,80,84,89,94,101.6,107.7,113.5,118,121,128.3,138.9,152.2,157,163.9,168,207.1,211.9,219,224.5,230,232.5,239.5,249.7,252.4,257.6,262.7,267.7,282.9,288.5,293.7];
+
+    const audio = document.getElementById('audio');
+    const debug = document.getElementById('debug');
+    const progress = document.getElementById('progress');
+    const currentTime = document.getElementById('currentTime');
+    const totalTime = document.getElementById('totalTime');
+    const lyrics = document.querySelectorAll('.lyric');
+    const visualizer = document.getElementById('visualizer');
+    const ring1 = document.getElementById('ring1');
+    const ring2 = document.getElementById('ring2');
+
+    lyrics.forEach((l, i) => {
+      l.dataset.time = TIMINGS[i];
+      l.dataset.index = i;
+    });
+
+    let currentIndex = -1;
+    let ringToggle = false;
+
+    // Audio context
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    const source = ctx.createMediaElementSource(audio);
+    
+    analyser.fftSize = 128;
+    source.connect(analyser);
+    analyser.connect(ctx.destination);
+    
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    // Create visualizer bars
+    for (let i = 0; i < 80; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'vis-bar';
+      visualizer.appendChild(bar);
+    }
+    const bars = document.querySelectorAll('.vis-bar');
+
+    let lastBeat = 0;
+
+    function animate() {
+      analyser.getByteFrequencyData(dataArray);
+      
+      bars.forEach((bar, i) => {
+        const value = dataArray[Math.floor(i * dataArray.length / bars.length)] || 0;
+        const height = Math.max(2, (value / 255) * 100);
+        bar.style.height = height + 'px';
+      });
+
+      // Beat detection
+      let bass = 0;
+      for (let i = 0; i < 8; i++) bass += dataArray[i];
+      bass /= 8;
+
+      const now = performance.now();
+      if (bass > 170 && now - lastBeat > 280) {
+        lastBeat = now;
+        const active = document.querySelector('.lyric.active');
+        if (active) {
+          active.classList.add('beat-pulse');
+          setTimeout(() => active.classList.remove('beat-pulse'), 500);
+        }
+
+        const ring = ringToggle ? ring1 : ring2;
+        ring.classList.add('pulse');
+        setTimeout(() => ring.classList.remove('pulse'), 1200);
+        ringToggle = !ringToggle;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    audio.addEventListener('loadedmetadata', () => {
+      totalTime.textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      const t = audio.currentTime;
+      progress.style.width = ((t / audio.duration) * 100) + '%';
+      currentTime.textContent = formatTime(t);
+
+      let newIndex = -1;
+      for (let i = TIMINGS.length - 1; i >= 0; i--) {
+        if (t >= TIMINGS[i]) {
+          newIndex = i;
+          break;
+        }
+      }
+
+      if (newIndex !== currentIndex) {
+        lyrics.forEach(l => l.classList.remove('active', 'past', 'upcoming'));
+        
+        if (newIndex >= 0) {
+          lyrics[newIndex].classList.add('active');
+          for (let i = 0; i < newIndex; i++) {
+            if (i >= newIndex - 1) lyrics[i].classList.add('past');
+          }
+          if (newIndex + 1 < lyrics.length) {
+            lyrics[newIndex + 1].classList.add('upcoming');
+          }
+        }
+        currentIndex = newIndex;
+      }
+
+      debug.textContent = `${t.toFixed(1)}s • Line ${currentIndex + 1}/${lyrics.length}`;
+    });
+
+    audio.addEventListener('play', () => {
+      ctx.resume();
+      animate();
+    });
+
+    // Create particles
+    const particlesDiv = document.getElementById('particles');
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 15 + 's';
+      p.style.animationDuration = (Math.random() * 10 + 12) + 's';
+      particlesDiv.appendChild(p);
+    }
+  </script>
+</body>
+</html>
