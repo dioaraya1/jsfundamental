@@ -72,8 +72,8 @@ const displayMovements = function (movements) {
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${
-      i + 1
-    } ${type}</div>
+          i + 1
+        } ${type}</div>
         <div class="movements__value">${mov}€</div>
       </div>`;
 
@@ -197,3 +197,28 @@ TEST DATA 2: Julia's data [9, 16, 6, 8, 3], Kate's data [10, 5, 6, 1, 4]
 
 GOOD LUCK 😀
 */
+
+const julia = [3, 5, 2, 12, 7];
+const kate = [4, 1, 15, 8, 3];
+
+const checkDogs = function (juliaData, kateData) {
+  const dogsJuliaCorrected = juliaData.slice();
+  dogsJuliaCorrected.splice(0, 1);
+  dogsJuliaCorrected.splice(-2);
+  console.log(dogsJuliaCorrected);
+  // const juliaCorrected = juliaData.slice(1, 3);
+  const dogs = dogsJuliaCorrected.concat(kateData);
+  console.log(dogs);
+
+  dogs.forEach(function (element) {
+    if (element >= 3) {
+      console.log(
+        `Dog number ${element} is an adult, and is ${element} years old`,
+      );
+    } else {
+      console.log(`Dog number ${element} is still a puppy 🐶`);
+    }
+  });
+};
+
+checkDogs(julia, kate);
