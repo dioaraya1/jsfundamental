@@ -64,8 +64,8 @@ const inputClosePin = document.querySelector('.form__input--pin');
 /////////////////////////////////////////////////
 // Functions
 const displayMovements = function (movements) {
+  containerMovements.innerHTML = '';
   movements.forEach(function (mov, i) {
-    containerMovements.innerHTML = '';
     // .textContent = 0
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
@@ -76,18 +76,42 @@ const displayMovements = function (movements) {
         } ${type}</div>
         <div class="movements__value">${mov}€</div>
       </div>`;
-
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
 
 displayMovements(account1.movements);
 
+const createUsernames = function (accs) {
+  accs.forEach(function (acc) {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
+    // const owner = "Steven Thomas Williams";
+
+    // const step1 = owner.toLowerCase();
+    // "steven thomas williams"
+
+    // const step2 = step1.split(' ');
+    // ["steven", "thomas", "williams"]
+
+    // const step3 = step2.map(word => word[0]);
+    // ["s", "t", "w"]
+
+    // const username = step3.join('');
+    // "stw"
+  });
+};
+
+createUsernames(accounts);
+console.log(accounts);
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 // LECTURES
 /////////////////////////////////////////////////
-
+/*
 // Simple Array Methods
 let arr = ['a', 'b', 'c', 'd', 'e'];
 
@@ -131,10 +155,12 @@ console.log([...arr, ...arr2]);
 // JOIN
 console.log(letters.join(' - '));
 
+*/
 ///////////////////////////////////////
 // Looping Arrays: forEach
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
+/*
 // for (const movement of movements) {
 for (const [i, movement] of movements.entries()) {
   if (movement > 0) {
@@ -198,6 +224,8 @@ TEST DATA 2: Julia's data [9, 16, 6, 8, 3], Kate's data [10, 5, 6, 1, 4]
 GOOD LUCK 😀
 */
 
+// Coding Challenge #1
+/*
 const julia = [3, 5, 2, 12, 7];
 const kate = [4, 1, 15, 8, 3];
 
@@ -222,3 +250,44 @@ const checkDogs = function (juliaData, kateData) {
 };
 
 checkDogs(julia, kate);
+*/
+
+///////////////////////////////////////
+// The map Method
+const eurToUsd = 1.1;
+
+// const movementsUSD = movements.map(function (mov) {
+//   return mov * eurToUsd;
+// });
+
+const movementsUSD = movements.map(mov => mov * eurToUsd);
+
+console.log(movements);
+console.log(movementsUSD);
+
+const movementsUSDfor = [];
+for (const mov of movements) movementsUSDfor.push(mov * eurToUsd);
+console.log(movementsUSDfor);
+
+const movementsDescriptions = movements.map(
+  (mov, i) =>
+    `Movement ${i + 1}: You ${mov > 0 ? 'deposited' : 'withdrew'} ${Math.abs(
+      mov,
+    )}`,
+);
+console.log(movementsDescriptions);
+
+///////////////////////////////////////
+// The filter Method
+const deposits = movements.filter(function (mov, i, arr) {
+  return mov > 0;
+});
+console.log(movements);
+console.log(deposits);
+
+const depositsFor = [];
+for (const mov of movements) if (mov > 0) depositsFor.push(mov);
+console.log(depositsFor);
+
+const withdrawals = movements.filter(mov => mov < 0);
+console.log(withdrawals);
