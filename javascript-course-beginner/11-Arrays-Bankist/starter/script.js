@@ -80,10 +80,9 @@ const displayMovements = function (movements) {
   });
 };
 
-
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance}€`;
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance}€`;
 };
 
 const calcDisplaySummary = function (acc) {
@@ -106,7 +105,6 @@ const calcDisplaySummary = function (acc) {
     .reduce((acc, int) => acc + int, 0);
   labelSumInterest.textContent = `${interest}€`;
 };
-
 
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
@@ -134,6 +132,16 @@ const createUsernames = function (accs) {
 createUsernames(accounts);
 console.log(accounts);
 
+// update UI
+const updateUI = function (acc) {
+  // display movements
+  displayMovements(acc.movements);
+  // display balance
+  calcDisplayBalance(acc);
+  // display summary
+  calcDisplaySummary(acc);
+};
+
 let currentAccount;
 // event handler
 btnLogin.addEventListener('click', function (e) {
@@ -154,20 +162,55 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
 
-    // display movements
-    displayMovements(currentAccount.movements);
-
-    // display balance
-    calcDisplayBalance(currentAccount.movements);
-
-    // display summary
-    calcDisplaySummary(currentAccount);
+    // update UI
+    updateUI(currentAccount);
   } else {
     containerApp.style.opacity = 0;
     labelWelcome.textContent = 'Log in to get started';
     inputLoginUsername.value = inputLoginPin.value = '';
   }
   console.log(currentAccount);
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value,
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    receiverAcc.username !== currentAccount.username &&
+    currentAccount.balance >= amount
+  ) {
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+    calcDisplayBalance(currentAccount);
+    displayMovements(currentAccount.movements);
+    updateUI(currentAccount);
+  }
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username,
+    );
+    // delete account
+    accounts.splice(index, 1);
+    // hide UI
+    containerApp.style.opacity = 0;
+    labelWelcome.textContent = 'Log in to get started';
+    inputCloseUsername.value = inputClosePin.value = '';
+  } else {
+    inputCloseUsername.value = inputClosePin.value = '';
+  }
 });
 
 /////////////////////////////////////////////////
