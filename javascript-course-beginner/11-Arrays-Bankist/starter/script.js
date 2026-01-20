@@ -80,13 +80,11 @@ const displayMovements = function (movements) {
   });
 };
 
-// displayMovements(account1.movements);
 
 const calcDisplayBalance = function (movements) {
   const balance = movements.reduce((acc, mov) => acc + mov, 0);
   labelBalance.textContent = `${balance}€`;
 };
-// calcDisplayBalance(account1.movements);
 
 const calcDisplaySummary = function (acc) {
   const incomes = acc.movements
@@ -109,7 +107,6 @@ const calcDisplaySummary = function (acc) {
   labelSumInterest.textContent = `${interest}€`;
 };
 
-// calcDisplaySummary(account1.movements);
 
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
