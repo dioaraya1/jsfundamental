@@ -526,3 +526,11 @@ console.log(
 
 const latestLargeMovement = movements.findLast(mov => Math.abs(mov) > 1000);
 console.log(latestLargeMovement);
+
+// console.log(movements);
+// const firstWithdrawal = movements.find(mov => mov < 0);
+// console.log(firstWithdrawal);
+
+// console.log(accounts);
+// const account = accounts.find(acc => acc.owner === 'Jessica Davis');
+// console.log(account);
