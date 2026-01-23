@@ -523,3 +523,6 @@ console.log(
     movements.length - latestLargeMovementIndex
   } movements ago`,
 );
+
+const latestLargeMovement = movements.findLast(mov => Math.abs(mov) > 1000);
+console.log(latestLargeMovement);
