@@ -67,9 +67,20 @@ inputLoginPin.value = '1111';
 
 /////////////////////////////////////////////////
 // Functions
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = 'none') {
   containerMovements.innerHTML = '';
-  movements.forEach(function (mov, i) {
+  // const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  let movs = movements.slice();
+
+  if (sort === 'asc') {
+    movs.sort((a, b) => a - b);
+  } else if (sort === 'desc') {
+    movs.sort((a, b) => b - a);
+  } else if (sort === 'none') {
+    movs = movements;
+  }
+
+  movs.forEach(function (mov, i) {
     // .textContent = 0
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
@@ -230,9 +241,27 @@ btnClose.addEventListener('click', function (e) {
   }
 });
 
-/////////////////////////////////////////////////
+let sorted = 'none';
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  if (sorted === 'none') {
+    sorted = 'asc';
+    btnSort.innerHTML = '&downarrow; SORT';
+  } else if (sorted === 'asc') {
+    sorted = 'desc';
+    btnSort.innerHTML = '&rightleftharpoons; SORT';
+  } else if (sorted === 'desc') {
+    sorted = 'none';
+    btnSort.innerHTML = '&uparrow; SORT';
+  }
+
+  displayMovements(currentAccount.movements, sorted);
+  // sorted = !sorted;
+  // btnSort.innerHTML = sorted ? '&uparrow; SORT' : '&downarrow; SORT';
+});
+
 // LECTURES
-/////////////////////////////////////////////////
 /*
 // Simple Array Methods
 let arr = ['a', 'b', 'c', 'd', 'e'];
@@ -451,7 +480,7 @@ YOUR TASKS:
 BONUS: What's the average weight of the heaviest breed that likes to fetch? HINT: Use the "Math.max" method along with the ... operator.
 
 TEST DATA:
-*/
+
 const breeds = [
   {
     breed: 'German Shepherd',
@@ -518,6 +547,36 @@ const swimmingAdjacent = [
   ),
 ];
 console.log(swimmingAdjacent);
+
+// 6
+const hasWeight = breeds.every(breed => breed.averageWeight >= 10);
+console.log(hasWeight);
+
+// 7
+const hasActive = breeds.some(breed => breed.activities.length >= 3);
+console.log(hasActive);
+
+// bonus
+const averageWeight =
+  breeds
+    .filter(breed => breed.activities.includes('fetch'))
+    .reduce((acc, breed) => acc + breed.averageWeight, 0) / breeds.length;
+console.log(averageWeight);
+
+const maxBreeds = breeds
+  .filter(breed => breed.activities.includes('fetch'))
+  .flatMap(breed => breed.averageWeight)
+  .reduce((acc, weight) => acc + weight, 0);
+console.log(maxBreeds);
+
+const fetchWeights = breeds
+  .filter(breed => breed.activities.includes('fetch'))
+  .map(breed => breed.averageWeight);
+const heaviestFetchBreed = Math.max(...fetchWeights);
+
+console.log(fetchWeights);
+console.log(heaviestFetchBreed);
+*/
 
 /*
 ///////////////////////////////////////
@@ -589,9 +648,9 @@ const totalDepositsUSD = movements
   })
   .reduce((acc, mov) => acc + mov, 0);
 console.log(totalDepositsUSD);
-*/
 
-/*
+
+
 ///////////////////////////////////////
 // The find Method
 
@@ -665,3 +724,33 @@ const overalBalance2 = accounts
 console.log(overalBalance2);
 
 */
+
+///////////////////////////////////////
+// Sorting Arrays
+
+// Strings
+const owners = ['Jonas', 'Zach', 'Adam', 'Martha'];
+console.log(owners.sort());
+console.log(owners);
+
+// Numbers
+console.log(movements);
+
+// return < 0, A, B (keep order)
+// return > 0, B, A (switch order)
+
+// Ascending
+// movements.sort((a, b) => {
+//   if (a > b) return 1;
+//   if (a < b) return -1;
+// });
+movements.sort((a, b) => a - b);
+console.log(movements);
+
+// Descending
+// movements.sort((a, b) => {
+//   if (a > b) return -1;
+//   if (a < b) return 1;
+// });
+movements.sort((a, b) => b - a);
+console.log(movements);
