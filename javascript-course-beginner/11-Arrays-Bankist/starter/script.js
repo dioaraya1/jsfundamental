@@ -809,3 +809,7 @@ labelBalance.addEventListener('click', function () {
   );
   console.log(movementsUI);
 });
+
+const user = 'Jonas';
+const userLower = [...user].map(el => el.toLowerCase());
+console.log(userLower);
