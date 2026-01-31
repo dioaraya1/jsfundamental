@@ -810,9 +810,17 @@ labelBalance.addEventListener('click', function () {
   console.log(movementsUI);
 });
 
-const user = 'Jonas';
-const userLower = [...user].map(el => el.toLowerCase());
-console.log(userLower);
+////////////////////////
+// Non destructive alternative: toReversed, toSorted, toSpliced, with
+console.log(movements);
+const reverseMov = movements.toReversed();
+console.log(movements);
+console.log(reverseMov);
 
-const userUpper = [...user].map(el => el.toUpperCase());
-console.log(userUpper);
+// toSorted (sort), toSplice (splice)
+// movements[1] = 5000;
+console.log(movements);
+
+const newMovements = movements.with(1, 5000);
+console.log(movements);
+console.log(newMovements);
