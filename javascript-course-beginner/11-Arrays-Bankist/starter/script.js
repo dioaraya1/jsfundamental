@@ -813,3 +813,6 @@ labelBalance.addEventListener('click', function () {
 const user = 'Jonas';
 const userLower = [...user].map(el => el.toLowerCase());
 console.log(userLower);
+
+const userUpper = [...user].map(el => el.toUpperCase());
+console.log(userUpper);
