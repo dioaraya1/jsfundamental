@@ -824,3 +824,11 @@ console.log(movements);
 const newMovements = movements.with(1, 5000);
 console.log(movements);
 console.log(newMovements);
+
+const menu = ['Pizza', 'Pasta', 'Risotto'];
+const newMenu1 = menu.toSpliced(1, 1, 'Gnocci');
+console.log(...menu);
+console.log(...newMenu1);
+
+const delMenu1 = newMenu1.toSpliced(1, 1);
+console.log(...delMenu1);
