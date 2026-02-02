@@ -832,3 +832,7 @@ console.log(...newMenu1);
 
 const delMenu1 = newMenu1.toSpliced(1, 1);
 console.log(...delMenu1);
+
+const newMenu2 = menu.toSpliced(1, 0, 'Garlic Bread');
+console.log(...menu);
+console.log(...newMenu2);
