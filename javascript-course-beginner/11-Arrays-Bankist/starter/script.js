@@ -581,6 +581,22 @@ const heaviestFetchBreed = Math.max(...fetchWeights);
 console.log(fetchWeights);
 console.log(heaviestFetchBreed);
 */
+// array methods practice
+// 1.
+const bankDepositSum = accounts
+  .flatMap(acc => acc.movements)
+  .filter(mov => mov > 0)
+  .reduce((sum, cur) => sum + cur, 0);
+console.log(bankDepositSum);
+
+// 2.
+const numDeposits1000 = accounts
+  .flatMap(acc => acc.movements)
+  .reduce((count, cur) => (cur >= 1000 ? ++count : count), 0);
+console.log(numDeposits1000);
+
+// 3.
+const { deposits, withdrawals } = 
 
 /*
 ///////////////////////////////////////
@@ -730,109 +746,109 @@ console.log(overalBalance2);
 */
 
 ///////////////////////////////////////
-// Sorting Arrays
+// // Sorting Arrays
 
-// Strings
-const owners = ['Jonas', 'Zach', 'Adam', 'Martha'];
-console.log(owners.sort());
-console.log(owners);
+// // Strings
+// const owners = ['Jonas', 'Zach', 'Adam', 'Martha'];
+// console.log(owners.sort());
+// console.log(owners);
 
-// Numbers
-console.log(movements);
+// // Numbers
+// console.log(movements);
 
-// return < 0, A, B (keep order)
-// return > 0, B, A (switch order)
+// // return < 0, A, B (keep order)
+// // return > 0, B, A (switch order)
 
-// Ascending
-// movements.sort((a, b) => {
-//   if (a > b) return 1;
-//   if (a < b) return -1;
+// // Ascending
+// // movements.sort((a, b) => {
+// //   if (a > b) return 1;
+// //   if (a < b) return -1;
+// // });
+// movements.sort((a, b) => a - b);
+// console.log(movements);
+
+// // Descending
+// // movements.sort((a, b) => {
+// //   if (a > b) return -1;
+// //   if (a < b) return 1;
+// // });
+// movements.sort((a, b) => b - a);
+// console.log(movements);
+
+// ///////////////////////////////////////
+// // Array grouping
+// const groupedMovements = Object.groupBy(movements, function (mov) {
+//   return mov > 0 ? 'deposit' : 'withdrawal';
 // });
-movements.sort((a, b) => a - b);
-console.log(movements);
+// console.log(groupedMovements);
 
-// Descending
-// movements.sort((a, b) => {
-//   if (a > b) return -1;
-//   if (a < b) return 1;
+// const groupedByActivity = Object.groupBy(accounts, account => {
+//   const movementCount = account.movements.length;
+//   if (movementCount >= 8) return 'very active';
+//   else if (movementCount >= 5) return 'active';
+//   else if (movementCount >= 2) return 'medium active';
+//   else return 'inactive';
 // });
-movements.sort((a, b) => b - a);
-console.log(movements);
+// console.log(groupedByActivity);
 
-///////////////////////////////////////
-// Array grouping
-const groupedMovements = Object.groupBy(movements, function (mov) {
-  return mov > 0 ? 'deposit' : 'withdrawal';
-});
-console.log(groupedMovements);
+// // const groupedAccount = Object.groupBy(accounts, account => account.type);
+// const groupedAccount = Object.groupBy(accounts, ({ type }) => type);
+// console.log(groupedAccount);
 
-const groupedByActivity = Object.groupBy(accounts, account => {
-  const movementCount = account.movements.length;
-  if (movementCount >= 8) return 'very active';
-  else if (movementCount >= 5) return 'active';
-  else if (movementCount >= 2) return 'medium active';
-  else return 'inactive';
-});
-console.log(groupedByActivity);
+// ///////////////////////////////////////
+// // More Ways of Creating and Filling Arrays
+// const arr = [1, 2, 3, 4, 5, 6, 7];
+// console.log(new Array(1, 2, 3, 4, 5, 6, 7));
 
-// const groupedAccount = Object.groupBy(accounts, account => account.type);
-const groupedAccount = Object.groupBy(accounts, ({ type }) => type);
-console.log(groupedAccount);
+// // Empty arrays + fill method
+// const x = new Array(7);
+// console.log(x);
+// // console.log(x.map(() => 5));
+// x.fill(1, 3, 5);
+// x.fill(1);
+// console.log(x);
 
-///////////////////////////////////////
-// More Ways of Creating and Filling Arrays
-const arr = [1, 2, 3, 4, 5, 6, 7];
-console.log(new Array(1, 2, 3, 4, 5, 6, 7));
+// arr.fill(23, 2, 6);
+// console.log(arr);
 
-// Empty arrays + fill method
-const x = new Array(7);
-console.log(x);
-// console.log(x.map(() => 5));
-x.fill(1, 3, 5);
-x.fill(1);
-console.log(x);
+// // Array.from
+// const y = Array.from({ length: 7 }, () => 1);
+// console.log(y);
 
-arr.fill(23, 2, 6);
-console.log(arr);
+// const z = Array.from({ length: 7 }, (_, i) => i + 1);
+// console.log(z);
 
-// Array.from
-const y = Array.from({ length: 7 }, () => 1);
-console.log(y);
+// labelBalance.addEventListener('click', function () {
+//   const movementsUI = Array.from(
+//     document.querySelectorAll('.movements__value'),
+//     el => Number(el.textContent.replace('€', '')),
+//   );
+//   console.log(movementsUI);
+// });
 
-const z = Array.from({ length: 7 }, (_, i) => i + 1);
-console.log(z);
+// ////////////////////////
+// // Non destructive alternative: toReversed, toSorted, toSpliced, with
+// console.log(movements);
+// const reverseMov = movements.toReversed();
+// console.log(movements);
+// console.log(reverseMov);
 
-labelBalance.addEventListener('click', function () {
-  const movementsUI = Array.from(
-    document.querySelectorAll('.movements__value'),
-    el => Number(el.textContent.replace('€', '')),
-  );
-  console.log(movementsUI);
-});
+// // toSorted (sort), toSplice (splice)
+// // movements[1] = 5000;
+// console.log(movements);
 
-////////////////////////
-// Non destructive alternative: toReversed, toSorted, toSpliced, with
-console.log(movements);
-const reverseMov = movements.toReversed();
-console.log(movements);
-console.log(reverseMov);
+// const newMovements = movements.with(1, 5000);
+// console.log(movements);
+// console.log(newMovements);
 
-// toSorted (sort), toSplice (splice)
-// movements[1] = 5000;
-console.log(movements);
+// const menu = ['Pizza', 'Pasta', 'Risotto'];
+// const newMenu1 = menu.toSpliced(1, 1, 'Gnocci');
+// console.log(...menu);
+// console.log(...newMenu1);
 
-const newMovements = movements.with(1, 5000);
-console.log(movements);
-console.log(newMovements);
+// const delMenu1 = newMenu1.toSpliced(1, 1);
+// console.log(...delMenu1);
 
-const menu = ['Pizza', 'Pasta', 'Risotto'];
-const newMenu1 = menu.toSpliced(1, 1, 'Gnocci');
-console.log(...menu);
-console.log(...newMenu1);
-
-const delMenu1 = newMenu1.toSpliced(1, 1);
-console.log(...delMenu1);
-
-const newMenu2 = menu.toSpliced(1, 0, 'Garlic Bread');
-console.log(...menu);
-console.log(...newMenu2);
+// const newMenu2 = menu.toSpliced(1, 0, 'Garlic Bread');
+// console.log(...menu);
+// console.log(...newMenu2);
